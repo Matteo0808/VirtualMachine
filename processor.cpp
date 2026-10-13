@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "C:\Users\3DFAB\Documents\GitHub\Stack\stack.cpp"
-#include "C:\Users\3DFAB\Documents\GitHub\StringSorter\sorting.cpp"
+#include "stack.cpp"
+#include "strhandler.h"
 
 int main(){
 
