@@ -144,11 +144,11 @@ ErrSuc ReadInFile(Info *programInfo){
     
     close(programInfo->fileInDescriptor);
 
-    printf("before - %s\n", programInfo->buffer);
+    printf("before - \n[%s]\n", programInfo->buffer);
 
     programInfo->buffer[programInfo->bufSize - 2] = '\0';
 
-    printf("after - %s\n", programInfo->buffer);
+    printf("after - \n[%s]\n", programInfo->buffer);
 
     return RETURN_SUCCESS;
 }
