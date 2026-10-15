@@ -132,7 +132,6 @@ void StackResizeDown(stack_t *stk, const char *callFile, const char *callFunc, s
 //TODO - obertki
 //NOTE completed
 
-
 /// @brief now for lld only 
 int main(){
 

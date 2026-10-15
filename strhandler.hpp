@@ -130,13 +130,9 @@ ErrSuc OpenInFile(Info *programInfo){
 ErrSuc ReadInFile(Info *programInfo){
     assert(programInfo != NULL);
 
-    char *bufferBeta = (char *)calloc(programInfo->bufSize + 2, sizeof(char));
+    programInfo->buffer = (char *)calloc(programInfo->bufSize + 1, sizeof(char));
 
-    if (bufferBeta == NULL) {return RETURN_ERROR_MEMORY_ALLOCATION;};
-
-    DEBUG(printf("bufBeta = %p\n", bufferBeta);)
-
-    programInfo->buffer = bufferBeta + 1;
+    if (programInfo->buffer == NULL) {return RETURN_ERROR_MEMORY_ALLOCATION;};
     
     DEBUG(printf("buf = %p\n", programInfo->buffer);)
 
@@ -147,6 +143,12 @@ ErrSuc ReadInFile(Info *programInfo){
     }
     
     close(programInfo->fileInDescriptor);
+
+    printf("before - %s\n", programInfo->buffer);
+
+    programInfo->buffer[programInfo->bufSize - 2] = '\0';
+
+    printf("after - %s\n", programInfo->buffer);
 
     return RETURN_SUCCESS;
 }

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "C:\Users\3DFAB\Documents\GitHub\StringSorter\sorting.h"
+#include "strhandler.hpp"
 
 enum commands{
     ERR = -1,
@@ -18,7 +18,8 @@ enum commands{
 };
 
 enum registers{
-    RERR = 0,
+    RERR = -1,
+
     RAX = 1,
     RBX = 2,
     RCX = 3,
@@ -35,6 +36,7 @@ struct instruction{
     int arg;
 };
 
+void ProgramConstructor(Info **programInfo, assembler **ass, const char *fileName);
 void Translator(Info *programInfo, assembler *ass);
 commands CheckCommandNoArgs(char *str);
 commands CheckCommandWithArgs(char *str);
@@ -43,15 +45,24 @@ registers IsRegister(char *str);
 void CreateCodeFile(Info *programInfo, assembler *ass);
 
 int main(){
-    Info *env = {};
+
+    printf("start\n");
+    
+    Info *env;
 
     assembler *assembler;
 
-    env->fileName = "code.asm"; //TODO - argv
+    ProgramConstructor(&env, &assembler, "code.asm"); //TODO - argv
 
     OpenInFile(env);
 
     ReadInFile(env);
+
+    //printf("%s ", env->buffer);    
+
+    return 0;
+    
+    OutputUnsortedText(env);
 
     ChangeEndlsToNulls(env);
 
@@ -59,21 +70,36 @@ int main(){
 
     Translator(env, assembler);
 
+    for(int i = 0; i < assembler->byteCodeLen; i++){
+        printf("%d ", assembler->byteCode[i]);
+    }
+
+    return 0;
+    
     CreateCodeFile(env, assembler);
 
     return 0;
 }
 
+void ProgramConstructor(Info **programInfo, assembler **ass, const char *fileName){
+
+    *programInfo = (Info *)calloc(1, sizeof(Info));
+
+    *ass = (assembler *)calloc(1, sizeof(assembler));
+
+    (*programInfo)->fileName = fileName;
+}
+
 void Translator(Info *programInfo, assembler *ass){
     
-    char *tempStr1 = (char *)calloc(5, sizeof(char));
-    char *tempStr2 = (char *)calloc(sizeof(int) * 8, sizeof(char));
+    char tempStr1[5];
+    char tempStr2[32];
 
     ass->byteCodeLen = 2 * programInfo->arrSize;
 
     ass->byteCode = (int *)calloc(ass->byteCodeLen, sizeof(int));
 
-    instruction instr;
+    instruction instr = {ERR, RERR};
 
     for(int index = 0; index < programInfo->arrSize; index++){
         int check = sscanf((programInfo->arrLines)[index].line, "%s %s", tempStr1, tempStr2);
@@ -92,8 +118,10 @@ void Translator(Info *programInfo, assembler *ass){
         }
         
         if (check == 2){
+
             instr.cmd = CheckCommandWithArgs(tempStr1);
             instr.arg = CheckArgument(tempStr2, &instr);
+
             if (instr.cmd == ERR){
                 printf("Command error\n");
                 abort();
@@ -113,8 +141,6 @@ void Translator(Info *programInfo, assembler *ass){
             instr.cmd = ERR;
         }
     }
-    free(tempStr1);
-    free(tempStr2);
 }
 
 
@@ -207,8 +233,11 @@ registers IsRegister(char *str){
 void CreateCodeFile(Info *programInfo, assembler *ass){
 
     programInfo->fileOut = fopen("code.txt", "w");
+
+    printf("create file\n");
+
     for(int i = 0; i < ass->byteCodeLen; i++){
-        fprintf(programInfo->fileOut, "%d", ass->byteCode[i]);
+        fprintf(programInfo->fileOut, "%d ", ass->byteCode[i]);
     }
     
     free(ass->byteCode);

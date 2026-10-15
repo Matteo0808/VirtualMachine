@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "stack.cpp"
-#include "strhandler.h"
+#include "strhandler.hpp"
 
 int main(){
 
