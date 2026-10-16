@@ -10,7 +10,7 @@ struct processor{
 
 int main(){
 
-    Info *env;
+    strInfo *env;
     processor *APM;
 
     OpenInFile(env);
@@ -21,9 +21,9 @@ int main(){
     return 0;
 }
 
-void ProcessorConstructor(Info **programInfo, processor **APM, const char *fileName){
+void ProcessorConstructor(strInfo **programInfo, processor **APM, const char *fileName){
 
-    *programInfo = (Info *)calloc(1, sizeof(Info));
+    *programInfo = (strInfo *)calloc(1, sizeof(strInfo));
 
     (*programInfo)->fileName = fileName;
 

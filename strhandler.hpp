@@ -18,6 +18,7 @@
 #endif
 
 
+
 enum ErrSuc{
     RETURN_POISON = -1,
     RETURN_SUCCESS = 0,
@@ -35,13 +36,14 @@ enum ErrSuc{
     RETURN_ERROR_FILEWRITE_UNS = 12,
 };
 
+
+
 struct Line{
     char *line;
     size_t len;
 };
 
-
-struct Info{
+struct strInfo{
     const char *fileName;
     int fileInDescriptor;
     FILE *fileOut;
@@ -56,62 +58,78 @@ struct Info{
 };
 
 
-ErrSuc OpenInFile(Info *programInfo);
-ErrSuc ReadInFile(Info *programInfo);
-ErrSuc BufferToLinesFragmentation(Info *programInfo);
+
+ErrSuc OpenInFile(strInfo *programInfo);
+ErrSuc ReadInFile(strInfo *programInfo);
+ErrSuc BufferToLinesFragmentation(strInfo *programInfo);
 
 void PrintfError(ErrSuc error);
 
-void ChangeEndlsToNulls(Info *programInfo);
-void ChangeNullsToEndls(Info *programInfo);
+void ChangeEndlsToNulls(strInfo *programInfo);
+void ChangeNullsToEndls(strInfo *programInfo);
 
-void ProgramDestroy(Info *programInfo DEBUG(, int fileOutUnsortedDescriptor, int fileOutInOneLineDescriptor));
+void StrHandlerDestroy(strInfo *programInfo DEBUG(, int fileOutUnsortedDescriptor, int fileOutInOneLineDescriptor));
+
+
 
 void PrintfError(ErrSuc error){
     switch (error){
+
         case (RETURN_POISON):
             printf("Poison value, the struct has been destroyed\n");
             break;
+
         case (RETURN_ERROR_FILEOPEN):
             printf("Error in input file opening in fuction open(), maybe you should check console arguments\n");
             break;
+
         case (RETURN_ERROR_FSTAT):
             printf("Error in input file opening in fuction fstat()\n");
             break;
+
         case (RETURN_ERROR_FILEREAD):
             printf("Error in input file reading in fuction read()\n");
             break;
+
         case (RETURN_ERROR_FILECREATE):
             printf("Error in input file creating or opening in fuction fopen() in sorting by beginning, maybe you should check console arguments\n");
             break;
+
         case (RETURN_ERROR_FILEWRITE_SORT_BEG):
             printf("Error in input file writing in fuction fprintf() in sorting by beginning\n");
             break;
+
         case (RETURN_ERROR_TOO_LARGE_FILE_SIZE):
             printf("Input file is too large\n");
             break;
+
         case (RETURN_ERROR_MEMORY_ALLOCATION):
             printf("Error in memory allocation\n");
             break;
+
         case (RETURN_ERROR_FILEADD_SORT_END):
             printf("Error in input file opening in fuction fopen() in sorting by ending, maybe you should check console arguments\n");
             break;
+
         case (RETURN_ERROR_FILEWRITE_SORT_END):
             printf("Error in input file writing in fuction fprintf() in sorting by ending\n");
             break;
+
         case (RETURN_ERROR_FILEADD_UNS):
             printf("Error in input file opening in fuction fopen() in outputting unsorted text, maybe you should check console arguments\n");
             break;
+
         case (RETURN_ERROR_FILEWRITE_UNS):
             printf("Error in input file writing in fuction fwrite() outputting unsorted text\n");
             break;
+
         default:
             printf("no errors:)");
             break;
     }
 }
 
-ErrSuc OpenInFile(Info *programInfo){
+ErrSuc OpenInFile(strInfo *programInfo){
     assert(programInfo != NULL);
     assert(&(programInfo->bufSize) != 0);
     
@@ -127,7 +145,7 @@ ErrSuc OpenInFile(Info *programInfo){
     return RETURN_SUCCESS;
 }
 
-ErrSuc ReadInFile(Info *programInfo){
+ErrSuc ReadInFile(strInfo *programInfo){
     assert(programInfo != NULL);
 
     char *bufferTemp = (char *)calloc(programInfo->bufSize + 2, sizeof(char));
@@ -155,16 +173,16 @@ ErrSuc ReadInFile(Info *programInfo){
     return RETURN_SUCCESS;
 }
 
-ErrSuc OutputUnsortedText(Info *programInfo){
+ErrSuc OutputUnsortedText(strInfo *programInfo){
     assert(programInfo != NULL);
     assert(programInfo->buffer != NULL);
 
     if(programInfo->fileOut == NULL){
-        programInfo->fileOut /*_Descriptor*/ = fopen("output.txt", "a"/*O_CREAT | O_RDWR | O_TRUNC, 0666*/);
+        programInfo->fileOut= fopen("output.txt", "a");
     }
 
-    if (programInfo->fileOut /*_Descriptor*/ == NULL){
-        fclose(programInfo->fileOut /*_Descriptor*/);
+    if (programInfo->fileOut == NULL){
+        fclose(programInfo->fileOut);
         return RETURN_ERROR_FILEADD_UNS;
     }
 
@@ -176,11 +194,10 @@ ErrSuc OutputUnsortedText(Info *programInfo){
 
     fputs("\n", programInfo->fileOut);
 
-    //fclose(programInfo->fileOut /*_Descriptor*/);
     return RETURN_SUCCESS;
 }
 
-void ChangeEndlsToNulls(Info *programInfo){
+void ChangeEndlsToNulls(strInfo *programInfo){
     assert(programInfo != NULL);
 
     size_t endlCount = 0;
@@ -189,11 +206,11 @@ void ChangeEndlsToNulls(Info *programInfo){
         if (programInfo->buffer[index] == '\r'){
 
             programInfo->buffer[index] = '\0';
+            
         }
+
         if (programInfo->buffer[index] == '\n'){
             
-            //printf("found \\n\n");
-
             endlCount++;
 
             programInfo->buffer[index] = '\0';
@@ -201,6 +218,7 @@ void ChangeEndlsToNulls(Info *programInfo){
             while((index + 1) < programInfo->bufSize && programInfo->buffer[index + 1] == '\n'){
 
                 programInfo->buffer[index + 1] = '\0';
+
                 index++;
             }
         }
@@ -208,9 +226,10 @@ void ChangeEndlsToNulls(Info *programInfo){
     programInfo->arrSize = endlCount;
 }
 
-void ChangeNullsToEndls(Info *programInfo){
+void ChangeNullsToEndls(strInfo *programInfo){
 
     for (size_t index = 0; index < programInfo->bufSize; index++){
+
         if (programInfo->buffer[index] == '\0'){
 
             programInfo->buffer[index] = '\n';
@@ -218,7 +237,7 @@ void ChangeNullsToEndls(Info *programInfo){
     }
 }
 
-ErrSuc BufferToLinesFragmentation(Info *programInfo){
+ErrSuc BufferToLinesFragmentation(strInfo *programInfo){
     assert(programInfo->buffer != NULL);
 
     DEBUG(printf("buffer = [%s]\n", programInfo->buffer);
@@ -238,31 +257,28 @@ ErrSuc BufferToLinesFragmentation(Info *programInfo){
         
         if (programInfo->buffer[index] == '\0'){
             while((index + 1) < (ssize_t)programInfo->bufSize && programInfo->buffer[index + 1] == '\0'){
+                
                 index++;
             }
             programInfo->arrLines[linesIndex].line = programInfo->buffer + (index + 1);
-            linesIndex++;
+
+            linesIndex++;            
         }
     }
     for (size_t index = 0; index < programInfo->arrSize; index++){
+
         if (programInfo->arrLines[index].line == 0){
 
             programInfo->arrLines[index].len = 0;
         }
         else{
-            if(index == 0){
-                programInfo->arrLines[index].len = strlen(programInfo->arrLines[index].line);
-            }//TODO - 
-            
-            else{
-                programInfo->arrLines[index].len = programInfo->arrLines[index + 1].line - programInfo->arrLines[index].line - 1;
-            }
+            programInfo->arrLines[index].len = programInfo->arrLines[index + 1].line - programInfo->arrLines[index].line - 1;
         }
     }
     return RETURN_SUCCESS;
 }
 
-void ProgramDestroy(Info *programInfo DEBUG(, int fileOutInOneLineDescriptor, int fileOutUnsortedDescriptor)){
+void StrHandlerDestroy(strInfo *programInfo DEBUG(, int fileOutInOneLineDescriptor, int fileOutUnsortedDescriptor)){
     DEBUG(close(fileOutInOneLineDescriptor);)
     DEBUG(close(fileOutUnsortedDescriptor);)
     
