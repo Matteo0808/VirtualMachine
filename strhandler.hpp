@@ -19,10 +19,10 @@
 
 
 
-enum ErrSuc{
+enum strErrorList{
     RETURN_POISON = -1,
-    RETURN_SUCCESS = 0,
-    RETURN_ERROR = 1,
+    RETURN_STR_SUCCESS = 0,
+    RETURN_STR_ERROR = 1,
     RETURN_ERROR_FILEOPEN = 2,
     RETURN_ERROR_FSTAT = 3,
     RETURN_ERROR_FILEREAD = 4,
@@ -54,16 +54,16 @@ struct strInfo{
     Line* arrLines;
     size_t arrSize;
 \
-    ErrSuc error;
+    strErrorList error;
 };
 
 
 
-ErrSuc OpenInFile(strInfo *programInfo);
-ErrSuc ReadInFile(strInfo *programInfo);
-ErrSuc BufferToLinesFragmentation(strInfo *programInfo);
+strErrorList OpenInFile(strInfo *programInfo);
+strErrorList ReadInFile(strInfo *programInfo);
+strErrorList BufferToLinesFragmentation(strInfo *programInfo);
 
-void PrintfError(ErrSuc error);
+void PrintfError(strErrorList error);
 
 void ChangeEndlsToNulls(strInfo *programInfo);
 void ChangeNullsToEndls(strInfo *programInfo);
@@ -72,7 +72,7 @@ void StrHandlerDestroy(strInfo *programInfo DEBUG(, int fileOutUnsortedDescripto
 
 
 
-void PrintfError(ErrSuc error){
+void PrintfError(strErrorList error){
     switch (error){
 
         case (RETURN_POISON):
@@ -129,7 +129,7 @@ void PrintfError(ErrSuc error){
     }
 }
 
-ErrSuc OpenInFile(strInfo *programInfo){
+strErrorList OpenInFile(strInfo *programInfo){
     assert(programInfo != NULL);
     assert(&(programInfo->bufSize) != 0);
     
@@ -142,10 +142,10 @@ ErrSuc OpenInFile(strInfo *programInfo){
     programInfo->bufSize = fileStat.st_size;
     if (programInfo->bufSize >= (size_t)1<<32) {return RETURN_ERROR_TOO_LARGE_FILE_SIZE;};
 
-    return RETURN_SUCCESS;
+    return RETURN_STR_SUCCESS;
 }
 
-ErrSuc ReadInFile(strInfo *programInfo){
+strErrorList ReadInFile(strInfo *programInfo){
     assert(programInfo != NULL);
 
     char *bufferTemp = (char *)calloc(programInfo->bufSize + 2, sizeof(char));
@@ -170,10 +170,10 @@ ErrSuc ReadInFile(strInfo *programInfo){
 
     printf("buffer - \n[%s]\n\n", programInfo->buffer);
 
-    return RETURN_SUCCESS;
+    return RETURN_STR_SUCCESS;
 }
 
-ErrSuc OutputUnsortedText(strInfo *programInfo){
+strErrorList OutputUnsortedText(strInfo *programInfo){
     assert(programInfo != NULL);
     assert(programInfo->buffer != NULL);
 
@@ -194,7 +194,7 @@ ErrSuc OutputUnsortedText(strInfo *programInfo){
 
     fputs("\n", programInfo->fileOut);
 
-    return RETURN_SUCCESS;
+    return RETURN_STR_SUCCESS;
 }
 
 void ChangeEndlsToNulls(strInfo *programInfo){
@@ -237,7 +237,7 @@ void ChangeNullsToEndls(strInfo *programInfo){
     }
 }
 
-ErrSuc BufferToLinesFragmentation(strInfo *programInfo){
+strErrorList BufferToLinesFragmentation(strInfo *programInfo){
     assert(programInfo->buffer != NULL);
 
     DEBUG(printf("buffer = [%s]\n", programInfo->buffer);
@@ -275,7 +275,7 @@ ErrSuc BufferToLinesFragmentation(strInfo *programInfo){
             programInfo->arrLines[index].len = programInfo->arrLines[index + 1].line - programInfo->arrLines[index].line - 1;
         }
     }
-    return RETURN_SUCCESS;
+    return RETURN_STR_SUCCESS;
 }
 
 void StrHandlerDestroy(strInfo *programInfo DEBUG(, int fileOutInOneLineDescriptor, int fileOutUnsortedDescriptor)){

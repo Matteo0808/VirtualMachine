@@ -37,6 +37,7 @@ struct instruction{
 };
 
 void AssemblerConstructor(strInfo **programInfo, assembler **ass, const char *fileName);
+void AssemblerDestructor(strInfo *programInfo, assembler *ass)
 
 commands CheckCommandNoArgs(char *str);
 commands CheckCommandWithArgs(char *str);
@@ -83,7 +84,7 @@ DEBUG(
 
     CreateCodeFile(env, assembler);
 
-    AssemblerDestroy(env, assembler);
+    AssemblerDestructor(env, assembler);
 
     return 0;
 }
@@ -300,7 +301,7 @@ void CreateCodeFile(strInfo *programInfo, assembler *ass){
     fclose(programInfo->fileOut);
 }
 
-void AssemblerDestroy(strInfo *programInfo, assembler *ass){
+void AssemblerDestructor(strInfo *programInfo, assembler *ass){
 
     StrHandlerDestroy(programInfo);
 

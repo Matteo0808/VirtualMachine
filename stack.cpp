@@ -46,7 +46,7 @@ enum ErrorSuccess{
     RETURN_ERROR = 1
 };
 
-enum errorList{
+enum stackErrorList{
     STACK_IS_OK = 0,
     STACK_WASNT_INITIALIZED = 1,
     STACK_WAS_DESTROYED_YET = 2,
@@ -75,11 +75,11 @@ stack_t *_StackConstructor(ssize_t capacity,
 void _StackDestructor(stack_t *stk, const char *callFile, const char *callFunc, ssize_t callLine);
 
 ErrorSuccess _StackVerify(const stack_t *stk, const char *verFile, const char *verFunc, ssize_t verLine);
-errorList StackCheckErrors(const stack_t *stk);
+stackErrorList StackCheckErrors(const stack_t *stk);
 void _StackPrintf(const stack_t *stk, const char *callFile, const char *callFunc, ssize_t callLine);
-void _StackDump(const stack_t *stk, errorList error, const char *dmpFile, const char *dmpFunc, ssize_t dmpLine);
+void _StackDump(const stack_t *stk, stackErrorList error, const char *dmpFile, const char *dmpFunc, ssize_t dmpLine);
 const char *GetLineStatus(stack_status status);
-const char *GetLineError(errorList status);
+const char *GetLineError(stackErrorList status);
 
 
 void _StackPush(stack_t *stk, ssize_t elem, const char *callFile, const char *callFunc, ssize_t callLine);
@@ -296,7 +296,7 @@ stack_t *_StackConstructor(ssize_t capacity,
 
 ErrorSuccess _StackVerify(const stack_t *stk, const char *verFile, const char *verFunc, ssize_t verLine){
     
-    errorList error = StackCheckErrors(stk);
+    stackErrorList error = StackCheckErrors(stk);
 
     if(error){
         _StackDump(stk, error, verFile, verFunc, verLine);
@@ -305,7 +305,7 @@ ErrorSuccess _StackVerify(const stack_t *stk, const char *verFile, const char *v
     return RETURN_SUCCESS;
 }
 
-errorList StackCheckErrors(const stack_t *stk){
+stackErrorList StackCheckErrors(const stack_t *stk){
     if(stk == NULL){
         return NULL_PTR_ON_STACK;
     }
@@ -375,7 +375,7 @@ errorList StackCheckErrors(const stack_t *stk){
 
 
 
-void _StackDump(const stack_t *stk, errorList error, const char *dmpFile, const char *dmpFunc, ssize_t dmpLine){
+void _StackDump(const stack_t *stk, stackErrorList error, const char *dmpFile, const char *dmpFunc, ssize_t dmpLine){
     
     FILE *fp = fopen("ded_lox.log", "a");
 
@@ -540,7 +540,7 @@ const char *GetLineStatus(stack_status status){
     }
 }
 
-const char *GetLineError(errorList error){
+const char *GetLineError(stackErrorList error){
     
     switch(error){
     

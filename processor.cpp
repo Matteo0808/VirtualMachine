@@ -13,8 +13,11 @@ int main(){
     strInfo *env;
     processor *APM;
 
+    ProcessorConstructor(&env, &APM, "code.txt");
+
     OpenInFile(env);
 
+    ReadInFile(env);
 
     
 
@@ -30,8 +33,5 @@ void ProcessorConstructor(strInfo **programInfo, processor **APM, const char *fi
     *APM = (processor *)calloc(1, sizeof(processor));
 
     (*APM)->stackFrame = StackConstructor(globalMinCapacity, "stackFrame");
-    
-    
-    
-}
 
+}

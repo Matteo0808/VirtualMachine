@@ -163,3 +163,10 @@ PUSH 20
 ADD
 OUT
 HLT
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+OUT
+HLT
