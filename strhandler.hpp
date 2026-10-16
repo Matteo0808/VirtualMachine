@@ -115,7 +115,7 @@ ErrSuc OpenInFile(Info *programInfo){
     assert(programInfo != NULL);
     assert(&(programInfo->bufSize) != 0);
     
-    programInfo->fileInDescriptor = open(programInfo->fileName, O_RDONLY);
+    programInfo->fileInDescriptor = open(programInfo->fileName, O_RDONLY | O_BINARY);
     if (programInfo->fileInDescriptor == -1) {return RETURN_ERROR_FILEOPEN;}
 
     struct stat fileStat = {};
@@ -130,10 +130,16 @@ ErrSuc OpenInFile(Info *programInfo){
 ErrSuc ReadInFile(Info *programInfo){
     assert(programInfo != NULL);
 
-    programInfo->buffer = (char *)calloc(programInfo->bufSize + 1, sizeof(char));
+    char *bufferTemp = (char *)calloc(programInfo->bufSize + 2, sizeof(char));
 
-    if (programInfo->buffer == NULL) {return RETURN_ERROR_MEMORY_ALLOCATION;};
+    if (bufferTemp == NULL) {return RETURN_ERROR_MEMORY_ALLOCATION;};
     
+    DEBUG(printf("bufTemp = %p\n", bufferTemp);)
+
+    programInfo->buffer = bufferTemp + 1;
+
+    programInfo->buffer[programInfo->bufSize] = '\n';
+
     DEBUG(printf("buf = %p\n", programInfo->buffer);)
 
     if (read(programInfo->fileInDescriptor, programInfo->buffer, programInfo->bufSize) <= 0){
@@ -144,11 +150,7 @@ ErrSuc ReadInFile(Info *programInfo){
     
     close(programInfo->fileInDescriptor);
 
-    printf("before - \n[%s]\n", programInfo->buffer);
-
-    programInfo->buffer[programInfo->bufSize - 2] = '\0';
-
-    printf("after - \n[%s]\n", programInfo->buffer);
+    printf("buffer - \n[%s]\n\n", programInfo->buffer);
 
     return RETURN_SUCCESS;
 }
@@ -183,14 +185,17 @@ void ChangeEndlsToNulls(Info *programInfo){
 
     size_t endlCount = 0;
 
-    for (size_t index = 0; index < programInfo->bufSize; index++){
+    for (size_t index = 0; index < programInfo->bufSize + 1; index++){
         if (programInfo->buffer[index] == '\r'){
 
             programInfo->buffer[index] = '\0';
         }
         if (programInfo->buffer[index] == '\n'){
+            
+            //printf("found \\n\n");
 
             endlCount++;
+
             programInfo->buffer[index] = '\0';
 
             while((index + 1) < programInfo->bufSize && programInfo->buffer[index + 1] == '\n'){
@@ -212,8 +217,6 @@ void ChangeNullsToEndls(Info *programInfo){
         }
     }
 }
-
-
 
 ErrSuc BufferToLinesFragmentation(Info *programInfo){
     assert(programInfo->buffer != NULL);
@@ -250,6 +253,7 @@ ErrSuc BufferToLinesFragmentation(Info *programInfo){
             if(index == 0){
                 programInfo->arrLines[index].len = strlen(programInfo->arrLines[index].line);
             }//TODO - 
+            
             else{
                 programInfo->arrLines[index].len = programInfo->arrLines[index + 1].line - programInfo->arrLines[index].line - 1;
             }

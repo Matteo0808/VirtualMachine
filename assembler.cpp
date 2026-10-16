@@ -29,6 +29,7 @@ enum registers{
 struct assembler{
     int *byteCode;
     unsigned int byteCodeLen;
+    int instrPtr;
 };
 
 struct instruction{
@@ -36,7 +37,7 @@ struct instruction{
     int arg;
 };
 
-void ProgramConstructor(Info **programInfo, assembler **ass, const char *fileName);
+void AssemblerConstructor(Info **programInfo, assembler **ass, const char *fileName);
 void Translator(Info *programInfo, assembler *ass);
 commands CheckCommandNoArgs(char *str);
 commands CheckCommandWithArgs(char *str);
@@ -49,51 +50,52 @@ int main(){
     printf("start\n");
     
     Info *env;
-
     assembler *assembler;
 
-    ProgramConstructor(&env, &assembler, "code.asm"); //TODO - argv
+    AssemblerConstructor(&env, &assembler, "code.asm"); //TODO - argv
 
     OpenInFile(env);
 
     ReadInFile(env);
 
-    //printf("%s ", env->buffer);    
-
-    return 0;
-    
     OutputUnsortedText(env);
 
     ChangeEndlsToNulls(env);
 
     BufferToLinesFragmentation(env);
 
+    printf("arrLinesSize = %d\n",env->arrSize);
+
+    for(int i = 0; i < env->arrSize; i++){
+        printf("line %d = <<%s>>\n", i, env->arrLines[i].line);
+    }
+
+
     Translator(env, assembler);
 
     for(int i = 0; i < assembler->byteCodeLen; i++){
         printf("%d ", assembler->byteCode[i]);
     }
-
-    return 0;
     
     CreateCodeFile(env, assembler);
 
     return 0;
 }
 
-void ProgramConstructor(Info **programInfo, assembler **ass, const char *fileName){
+void AssemblerConstructor(Info **programInfo, assembler **ass, const char *fileName){
 
     *programInfo = (Info *)calloc(1, sizeof(Info));
 
     *ass = (assembler *)calloc(1, sizeof(assembler));
+
+    (*ass)->instrPtr = 0;
 
     (*programInfo)->fileName = fileName;
 }
 
 void Translator(Info *programInfo, assembler *ass){
     
-    char tempStr1[5];
-    char tempStr2[32];
+    ass->instrPtr = 0;
 
     ass->byteCodeLen = 2 * programInfo->arrSize;
 
@@ -102,6 +104,11 @@ void Translator(Info *programInfo, assembler *ass){
     instruction instr = {ERR, RERR};
 
     for(int index = 0; index < programInfo->arrSize; index++){
+        printf("i = [%d]\n", index);
+        
+        char tempStr1[5];
+        char tempStr2[32];
+
         int check = sscanf((programInfo->arrLines)[index].line, "%s %s", tempStr1, tempStr2);
 
         if (check == 1){
@@ -112,7 +119,11 @@ void Translator(Info *programInfo, assembler *ass){
                 abort();
             }
 
-            ass->byteCode[index] = (int)instr.cmd;
+            printf("ip = %d\n", ass->instrPtr);
+
+            ass->byteCode[ass->instrPtr] = (int)instr.cmd;
+
+            ass->instrPtr++;
 
             continue;
         }
@@ -131,12 +142,16 @@ void Translator(Info *programInfo, assembler *ass){
                 abort();
             }
 
-            ass->byteCode[index] = instr.cmd;
-            ass->byteCode[index + 1] = instr.arg;
-            index++; 
+            printf("BIGPRINTF:\nass->instrPtr = %d\ninstr.cmd = %d\ninstr.arg = %d\n\n", ass->instrPtr, instr.cmd, instr.arg);
+
+            ass->byteCode[ass->instrPtr] = instr.cmd;
+            ass->byteCode[ass->instrPtr + 1] = instr.arg;
+
+            printf("command = <<%d>>, argument = <<%d>>\n", ass->byteCode[ass->instrPtr], ass->byteCode[ass->instrPtr + 1]);
+
+            ass->instrPtr += 2;
         }
         
-
         else{
             instr.cmd = ERR;
         }
@@ -170,9 +185,11 @@ commands CheckCommandNoArgs(char *str){
 
 commands CheckCommandWithArgs(char *str){
     if(strcmp(str, "PUSH") == 0){
+        printf("PUSHr\n");
         return PUSH;
     }
     if(strcmp(str, "POP") == 0){
+        printf("POPr\n");
         return POP;
     }
     else{

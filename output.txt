@@ -3,3 +3,142 @@
 PUSH 10
 PUSH 20
 ADDDD
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+D
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+D
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+D
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+D
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+D
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+D
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+OUT
+HLT
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+OUT
+HLT
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+OUT
+HLT
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+OUT
+HLT
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+OUT
+HLT
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+OUT
+HLT
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+OUT
+HLT
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+OUT
+HLT
+===Unsorted=Text===
+
+PUSH 10
+PUSH 20
+ADD
+OUT
+HLT
