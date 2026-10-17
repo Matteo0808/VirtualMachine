@@ -140,7 +140,9 @@ strErrorList OpenInFile(strInfo *programInfo){
     if (fstat(programInfo->fileInDescriptor, &fileStat) == -1) {return RETURN_ERROR_FSTAT;}
 
     programInfo->bufSize = fileStat.st_size;
-    if (programInfo->bufSize >= (size_t)1<<32) {return RETURN_ERROR_TOO_LARGE_FILE_SIZE;};
+    if (programInfo->bufSize >= (size_t)1<<16) {return RETURN_ERROR_TOO_LARGE_FILE_SIZE;};
+
+    printf("bufSize = %d\n", programInfo->bufSize);
 
     return RETURN_STR_SUCCESS;
 }
@@ -156,7 +158,11 @@ strErrorList ReadInFile(strInfo *programInfo){
 
     programInfo->buffer = bufferTemp + 1;
 
+#ifndef ONE_LINE_BUFFER
+
     programInfo->buffer[programInfo->bufSize] = '\n';
+    
+#endif
 
     DEBUG(printf("buf = %p\n", programInfo->buffer);)
 
@@ -168,7 +174,7 @@ strErrorList ReadInFile(strInfo *programInfo){
     
     close(programInfo->fileInDescriptor);
 
-    printf("buffer - \n[%s]\n\n", programInfo->buffer);
+    printf("buffer - [%s]\n", programInfo->buffer);
 
     return RETURN_STR_SUCCESS;
 }
@@ -192,7 +198,7 @@ strErrorList OutputUnsortedText(strInfo *programInfo){
 
     fwrite(programInfo->buffer, sizeof(char), programInfo->bufSize, programInfo->fileOut);
 
-    fputs("\n", programInfo->fileOut);
+    fputs("\n\n\n", programInfo->fileOut);
 
     return RETURN_STR_SUCCESS;
 }

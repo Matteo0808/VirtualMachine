@@ -2,28 +2,7 @@
 #include <string.h>
 
 #include "strhandler.hpp"
-
-enum commands{
-    ERR = -1,
-    HLT = 0,
-    OUT = 1,
-    PUSH = 2,
-    POP = 3,
-    PUSHR = 4,
-    POPR = 5,
-    ADD = 6,
-    SUB = 7,
-    MUL = 8,
-    DIV = 9
-};
-
-enum registers{
-    RERR = -1,
-    RAX = 1,
-    RBX = 2,
-    RCX = 3,
-    RDX = 4
-};
+#include "config.hpp"
 
 struct assembler{
     int *byteCode;
@@ -37,7 +16,7 @@ struct instruction{
 };
 
 void AssemblerConstructor(strInfo **programInfo, assembler **ass, const char *fileName);
-void AssemblerDestructor(strInfo *programInfo, assembler *ass)
+void AssemblerDestructor(strInfo *programInfo, assembler *ass);
 
 commands CheckCommandNoArgs(char *str);
 commands CheckCommandWithArgs(char *str);
@@ -109,14 +88,15 @@ void Translator(strInfo *programInfo, assembler *ass){
     instruction instr = {ERR, RERR};
 
     for (int index = 0; index < programInfo->arrSize; index++){
-        printf("i = [%d]\n", index);
-        
+                
         char tempStr1[5];
-        char tempStr2[32];
+        char tempStr2[11]; //TODO - rename
 
         int check = sscanf((programInfo->arrLines)[index].line, "%s %s", tempStr1, tempStr2);
 
-        if (check == 1){
+        //TODO rename check
+
+        if (check == 1){ //TODO - enum 1 2
 
             instr.cmd = CheckCommandNoArgs(tempStr1);
 
@@ -124,9 +104,7 @@ void Translator(strInfo *programInfo, assembler *ass){
                 printf("Command error\n");
                 abort();
             }
-
-            printf("ip = %d\n", ass->instrPtr);
-
+            
             ass->byteCode[ass->instrPtr] = (int)instr.cmd;
 
             ass->instrPtr++;
@@ -195,6 +173,10 @@ commands CheckCommandNoArgs(char *str){
         return DIV;
     }
 
+    if (strcmp(str, "POP") == 0){
+        return POP;
+    } 
+
     else{
         return ERR;
     }
@@ -207,7 +189,7 @@ commands CheckCommandWithArgs(char *str){
     }
 
     if (strcmp(str, "POP") == 0){
-        return POP;
+        return POPR;
     }
 
     else{
@@ -217,7 +199,7 @@ commands CheckCommandWithArgs(char *str){
 
 int CheckArgument(char *str, instruction *instr){
 
-    int tempInt = 0;
+    int tempInt = 0; //TODO rename
 
     int check = sscanf(str, "%d", &tempInt);
 

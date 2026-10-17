@@ -5,14 +5,26 @@
 #include <string.h>
 #include <assert.h>
 
-#define DEBUG_MODE
-#define CANARY_PROTECTION
-#define HASH_PROTECTION
+//#define DEBUG_MODE
+//#define CANARY_PROTECTION
+//#define HASH_PROTECTION
 
 #ifdef DEBUG_MODE
     #define DEBUG(...) __VA_ARGS__
 #else
     #define DEBUG(...)
+#endif
+
+#define INT_MODE
+//#define LL_INT_MODE
+//#define DOUBLE_MODE
+
+#ifdef INT_MODE
+    typedef int stackType;
+#elifdef LL_INT_MODE
+    typedef ssize_t stackType
+#elifdef DOUBLE_MODE
+    typedef double stackType
 #endif
 
 #define StackConstructor(capacity, ...) _StackConstructor(capacity, DEBUG(__VA_ARGS__,) __FILE__, __FUNCTION__, __LINE__)
@@ -26,12 +38,13 @@
 static ssize_t globalDebugHashSum;
 
 const ssize_t globalFiasco = 0xF1A5C0;    //15836608
+
 const ssize_t globalMinCapacity = 5;
 
 #ifdef CANARY_PROTECTION
 
-    const ssize_t canaryL = 48099263;   //10110111011110111110111111
-    const ssize_t canaryR = 86118464;  //101001000100001000001000000
+    const stackType canaryL = 48099263;   //10110111011110111110111111
+    const stackType canaryR = 86118464;  //101001000100001000001000000
 
 #endif
 
@@ -53,17 +66,23 @@ enum stackErrorList{
     NULL_PTR_ON_DATA = 3,
     NULL_PTR_ON_STACK = 4,
     SIZE_OVER_CAPACITY = 5,
-    CAPACITY_LOWER_MINIMAL = 6,
-    CAPACITY_BELOW_ZERO = 7
+    SIZE_BELOW_ZERO = 6,
+    CAPACITY_LOWER_MINIMAL = 7,
+    CAPACITY_BELOW_ZERO = 8
+
 #ifdef CANARY_PROTECTION
-    , CANARY_DATA_LEFT_ATTACKED = 8,
-    CANARY_DATA_RIGHT_ATTACKED = 9,
-    CANARY_STACK_LEFT_ATTACKED = 10,
-    CANARY_STACK_RIGHT_ATTACKED = 11
+
+    , CANARY_DATA_LEFT_ATTACKED = 9,
+    CANARY_DATA_RIGHT_ATTACKED = 10,
+    CANARY_STACK_LEFT_ATTACKED = 11,
+    CANARY_STACK_RIGHT_ATTACKED = 12
+
 #endif
 
 #ifdef HASH_PROTECTION
-    , HASH_WAS_CHANGED = 12
+
+    , HASH_WAS_CHANGED = 13
+
 #endif
 };
 
@@ -82,8 +101,8 @@ const char *GetLineStatus(stack_status status);
 const char *GetLineError(stackErrorList status);
 
 
-void _StackPush(stack_t *stk, ssize_t elem, const char *callFile, const char *callFunc, ssize_t callLine);
-void _StackPop(stack_t *stk, ssize_t *elem, const char *callFile, const char *callFunc, ssize_t callLine);
+void _StackPush(stack_t *stk, stackType *elem, const char *callFile, const char *callFunc, ssize_t callLine);
+void _StackPop(stack_t *stk, stackType *elem, const char *callFile, const char *callFunc, ssize_t callLine);
 
 void StackResizeUp(stack_t *stk, const char *callFile, const char *callFunc, ssize_t callLine);
 void StackResizeDown(stack_t *stk, const char *callFile, const char *callFunc, ssize_t callLine);
@@ -132,48 +151,13 @@ void StackResizeDown(stack_t *stk, const char *callFile, const char *callFunc, s
 //TODO - obertki
 //NOTE completed
 
-/// @brief now for lld only 
-int main(){
-
-    stack_t *stk = StackConstructor(globalMinCapacity, "stk");
-
-    DEBUG(printf("debug1\n");)
-
-    StackPush(stk, 10);
-
-    DEBUG(printf("debug2\n");)
-
-    StackPrintf(stk);
-
-    DEBUG(printf("debug3\n");)
-
-    StackPush(stk, 20);
-    StackPrintf(stk);
-
-    StackPush(stk, 30);
-    StackPrintf(stk);
-
-    StackPush(stk, 40);
-    StackPrintf(stk);
-    
-    char *ptr = (char *)stk + 40;
-
-    StackPush(stk, 50);
-    StackPrintf(stk);
-
-    StackDestructor(stk);
-
-    DEBUG(printf("debug4\n");)
-
-    return 0;
-}
-
+//TODO - dump typedef
 
 struct stack_t{
     
 #ifdef CANARY_PROTECTION
 
-    ssize_t canaryStackLeft;
+    stackType canaryStackLeft;
 
 #endif
 
@@ -185,13 +169,13 @@ struct stack_t{
     
 #ifdef CANARY_PROTECTION
 
-    ssize_t canaryLeft;
-    ssize_t *data;
-    ssize_t canaryRight;
+    stackType canaryLeft;
+    stackType *data;
+    stackType canaryRight;
 
 #else
 
-    ssize_t *data;
+    stackType *data;
 
 #endif
 
@@ -207,7 +191,7 @@ struct stack_t{
 
 #ifdef CANARY_PROTECTION
 
-    ssize_t canaryStackRight;
+    stackType canaryStackRight;
 
 #endif
 };
@@ -250,7 +234,7 @@ stack_t *_StackConstructor(ssize_t capacity,
 
     stk->canaryStackRight = canaryR;
 
-    ssize_t *temp = (ssize_t *)calloc(capacity + 2, sizeof(ssize_t));
+    stackType *temp = (stackType *)calloc(capacity + 2, sizeof(ssize_t));
     assert(temp != NULL);
 
     temp[0] = canaryL;
@@ -261,7 +245,7 @@ stack_t *_StackConstructor(ssize_t capacity,
 
 #else
 
-    stk->data = (ssize_t *)calloc(capacity, sizeof(ssize_t));
+    stk->data = (stackType *)calloc(capacity, sizeof(stackType));
 
 #endif
 
@@ -277,7 +261,7 @@ stack_t *_StackConstructor(ssize_t capacity,
 
     globalDebugHashSum = stk->hash;
 
-    printf("%lld\n", stk->hash);
+    //printf("%lld\n", stk->hash);
 
 #endif
 
@@ -300,6 +284,7 @@ ErrorSuccess _StackVerify(const stack_t *stk, const char *verFile, const char *v
 
     if(error){
         _StackDump(stk, error, verFile, verFunc, verLine);
+        exit(1);
         return RETURN_ERROR;
     }
     return RETURN_SUCCESS;
@@ -320,6 +305,10 @@ stackErrorList StackCheckErrors(const stack_t *stk){
 
     if(stk->data == NULL){
         return NULL_PTR_ON_DATA;
+    }
+
+    if(stk->size < 0){
+        return SIZE_BELOW_ZERO;
     }
 
 #ifdef CANARY_PROTECTION
@@ -355,12 +344,15 @@ stackErrorList StackCheckErrors(const stack_t *stk){
     }
 
 #ifdef HASH_PROTECTION
-    //ssize_t temp = stk->hash;
+
     stack_t stkTmp = *stk;
+
     stkTmp.hash = 0;
+
     ssize_t hashTmp = StackHashCounter(&stkTmp);
     if(stk->hash != hashTmp){
         printf("%lld, %lld\n", stk->hash, hashTmp);
+
         return HASH_WAS_CHANGED;
     }
 
@@ -377,7 +369,7 @@ stackErrorList StackCheckErrors(const stack_t *stk){
 
 void _StackDump(const stack_t *stk, stackErrorList error, const char *dmpFile, const char *dmpFunc, ssize_t dmpLine){
     
-    FILE *fp = fopen("ded_lox.log", "a");
+    FILE *fp = fopen("stack_dump.log", "a");
 
     fputs("Hello! StackDump is working!\n", fp);
     fprintf(fp, "Function was called by %s() at %s:%lld\n", dmpFunc, dmpFile, dmpLine);
@@ -385,8 +377,6 @@ void _StackDump(const stack_t *stk, stackErrorList error, const char *dmpFile, c
     if(error){
         fprintf(fp, "StackDump was called with error code: %s\n", GetLineError(error));
     }
-    // fclose(fp);
-    // return;
 
     DEBUG(printf("file0\n");)
 
@@ -411,36 +401,36 @@ void _StackDump(const stack_t *stk, stackErrorList error, const char *dmpFile, c
 
     if(error == CANARY_STACK_LEFT_ATTACKED){
         fprintf(fp, "Left stack canary was attecked:\n");
-        fprintf(fp, "Left stack canary = %lld at [%p] <-- have ot be %lld\n",
+        fprintf(fp, "Left stack canary = %d at [%p] <-- have ot be %d\n",
                 stk->canaryStackLeft, &(stk->canaryStackLeft), canaryL);
-        fprintf(fp, "Right stack canary = %lld at [%p] <-- have ot be %lld\n",
+        fprintf(fp, "Right stack canary = %d at [%p] <-- have ot be %d\n",
                 stk->canaryStackRight, &(stk->canaryStackRight), canaryR);
         exit(1);
     }
 
     if(error == CANARY_DATA_LEFT_ATTACKED){
         fprintf(fp, "Left data canary was attecked:\n");
-        fprintf(fp, "Left stack canary = %lld at [%p] <-- have ot be %lld\n",
+        fprintf(fp, "Left stack canary = %d at [%p] <-- have ot be %d\n",
                 stk->canaryStackLeft, &(stk->canaryStackLeft), canaryL);
-        fprintf(fp, "Right stack canary = %lld at [%p] <-- have ot be %lld\n",
+        fprintf(fp, "Right stack canary = %d at [%p] <-- have ot be %d\n",
                 stk->canaryStackRight, &(stk->canaryStackRight), canaryR);
         exit(1);
     }
 
     if(error == CANARY_DATA_RIGHT_ATTACKED){
         fprintf(fp, "Right data canary was attecked:\n");
-        fprintf(fp, "Left stack canary = %lld at [%p] <-- have ot be %lld\n",
+        fprintf(fp, "Left stack canary = %d at [%p] <-- have ot be %d\n",
                 stk->canaryStackLeft, &(stk->canaryStackLeft), canaryL);
-        fprintf(fp, "Right stack canary = %lld at [%p] <-- have ot be %lld\n",
+        fprintf(fp, "Right stack canary = %d at [%p] <-- have ot be %d\n",
                 stk->canaryStackRight, &(stk->canaryStackRight), canaryR);
         exit(1);
     }
 
     if(error == CANARY_STACK_RIGHT_ATTACKED){
         fprintf(fp, "Right stack canary was attecked:\n");
-        fprintf(fp, "Left stack canary = %lld at [%p] <-- have ot be %lld\n",
+        fprintf(fp, "Left stack canary = %d at [%p] <-- have ot be %d\n",
                 stk->canaryStackLeft, &(stk->canaryStackLeft), canaryL);
-        fprintf(fp, "Right stack canary = %lld at [%p] <-- have ot be %lld\n",
+        fprintf(fp, "Right stack canary = %d at [%p] <-- have ot be %d\n",
                 stk->canaryStackRight, &(stk->canaryStackRight), canaryR);
         exit(1);
     }
@@ -473,8 +463,8 @@ void _StackDump(const stack_t *stk, stackErrorList error, const char *dmpFile, c
 
 #ifdef CANARY_PROTECTION
 
-    fprintf(fp, "\tLeft Canary  = %lld at [%p] <-- have to be 48099263\n", stk->canaryStackLeft, &(stk->canaryStackLeft));
-    fprintf(fp, "\tRight Canary = %lld at [%p] <-- have to be 86118464\n", stk->canaryStackRight, &(stk->canaryStackRight));
+    fprintf(fp, "\tLeft Canary  = %d at [%p] <-- have to be 48099263\n", stk->canaryStackLeft, &(stk->canaryStackLeft));
+    fprintf(fp, "\tRight Canary = %d at [%p] <-- have to be 86118464\n", stk->canaryStackRight, &(stk->canaryStackRight));
 
 #endif 
 
@@ -494,23 +484,23 @@ void _StackDump(const stack_t *stk, stackErrorList error, const char *dmpFile, c
     for(ssize_t index = 0; index < stk->capacity + 2; index++){
 
         if(index == 0){
-            fprintf(fp, "\t\t[%p]\t[%lld] = %lld <-- canaryLeft (have to be 48099263)\n", stk->data + index - 1, index - 1, stk->data[index - 1]);
+            fprintf(fp, "\t\t[%p]\t[%lld] = %d <-- canaryLeft (have to be 48099263)\n", stk->data + index - 1, index - 1, stk->data[index - 1]);
             continue;
         }
 
         if(index < stk->size + 1){
-            fprintf(fp, "\t\t[%p]\t*[%lld] = %lld\n", stk->data + index - 1, index - 1, stk->data[index - 1]);
+            fprintf(fp, "\t\t[%p]\t*[%lld] = %d\n", stk->data + index - 1, index - 1, stk->data[index - 1]);
             continue;
         }
 
         if(stk->size + 1 <= index && index < stk->capacity + 1){
             //fprintf(fp, "%lld", stk->capacity);
-            fprintf(fp, "\t\t[%p]\t [%lld] = %lld\n", stk->data + index - 1, index - 1, stk->data[index - 1]);
+            fprintf(fp, "\t\t[%p]\t [%lld] = %d\n", stk->data + index - 1, index - 1, stk->data[index - 1]);
             continue;
         }
 
         else{
-            fprintf(fp, "\t\t[%p]\t [%lld] = %lld <-- canaryRight(have to be 86118464)\n", stk->data + index - 1, index - 1, stk->data[index - 1]);
+            fprintf(fp, "\t\t[%p]\t [%lld] = %d <-- canaryRight(have to be 86118464)\n", stk->data + index - 1, index - 1, stk->data[index - 1]);
             continue;
         }
     }
@@ -561,6 +551,9 @@ const char *GetLineError(stackErrorList error){
 
         case SIZE_OVER_CAPACITY:
             return "SIZE_OVER_CAPACITY";
+        
+        case SIZE_BELOW_ZERO:
+            return "SIZE_BELOW_ZERO";
 
         case CAPACITY_LOWER_MINIMAL:
             return "CAPACITY_LOWER_MINIMAL";
@@ -597,14 +590,14 @@ const char *GetLineError(stackErrorList error){
 }
 
 
-void _StackPush(stack_t *stk, ssize_t elem, const char *callFile, const char *callFunc, ssize_t callLine){
+void _StackPush(stack_t *stk, stackType *elem, const char *callFile, const char *callFunc, ssize_t callLine){
     
     ErrorSuccess err = RETURN_SUCCESS;
 
     err = _StackVerify(stk, callFile, callFunc, callLine);
     
     if(stk->size < stk->capacity){
-        stk->data[stk->size] = elem;
+        stk->data[stk->size] = *elem;
         stk->size++;
     }
     else{
@@ -612,7 +605,7 @@ void _StackPush(stack_t *stk, ssize_t elem, const char *callFile, const char *ca
 
         StackResizeUp(stk, callFile, callFunc, callLine);
 
-        stk->data[stk->size] = elem;
+        stk->data[stk->size] = *elem;
         stk->size++;
     }
 
@@ -632,55 +625,50 @@ void _StackPush(stack_t *stk, ssize_t elem, const char *callFile, const char *ca
     }
 }
 
-void _StackPop(stack_t *stk, ssize_t *elem, const char *callFile, const char *callFunc, ssize_t callLine){
+void _StackPop(stack_t *stk, stackType *elem, const char *callFile, const char *callFunc, ssize_t callLine){
     
     ErrorSuccess err = RETURN_SUCCESS;
     
     err = _StackVerify(stk, callFile, callFunc, callLine);
 
-    if(stk->size > 0){
-        stk->size--;
+    stk->size--;
 
-        if(4 * stk->size <= stk->capacity && stk->capacity > globalMinCapacity){
-            DEBUG(StackDump(stk);)
+    if(4 * stk->size <= stk->capacity && stk->capacity > globalMinCapacity){
+        DEBUG(StackDump(stk);)
 
-            StackResizeDown(stk, callFile, callFunc, callLine);
-        }
-
-    #ifdef HASH_PROTECTION
-
-        stk->hash = 0;
-        stk->hash = StackHashCounter(stk);    
-
-        globalDebugHashSum = stk->hash;
-
-    #endif
-
-        err = _StackVerify(stk, callFile, callFunc, callLine);
-
-        *elem = stk->data[stk->size];
-
-        if(err){
-            printf("Error in StackPop(), check log file\n");
-        }
+        StackResizeDown(stk, callFile, callFunc, callLine);
     }
-    else{
-        printf("Stack is empty:((\n");
 
-    #ifdef HASH_PROTECTION
+#ifdef HASH_PROTECTION
 
-        stk->hash = 0;
-        stk->hash = StackHashCounter(stk);    
+    stk->hash = 0;
+    stk->hash = StackHashCounter(stk);    
 
-        globalDebugHashSum = stk->hash;
+    globalDebugHashSum = stk->hash;
 
-    #endif
+#endif
 
-        err = _StackVerify(stk, callFile, callFunc, callLine);
-        
-        if(err){
-            printf("Error in StackPop(), check log file\n");
-        }
+    err = _StackVerify(stk, callFile, callFunc, callLine);
+
+    *elem = stk->data[stk->size];
+
+    if(err){
+        printf("Error in StackPop(), check log file\n");
+    }
+
+#ifdef HASH_PROTECTION
+
+    stk->hash = 0;
+    stk->hash = StackHashCounter(stk);    
+
+    globalDebugHashSum = stk->hash;
+
+#endif
+
+    err = _StackVerify(stk, callFile, callFunc, callLine);
+    
+    if(err){
+        printf("Error in StackPop(), check log file\n");
     }
 }
 
@@ -692,7 +680,7 @@ void _StackDestructor(stack_t *stk, const char *callFile, const char *callFunc, 
     err = _StackVerify(stk, callFile, callFunc, callLine);
     
     for(ssize_t index = 0; index <= stk->capacity; index++){
-        stk->data[index] = globalFiasco;
+        stk->data[index] = (stackType)globalFiasco;
     }
 
 #ifdef CANARY_PROTECTION
@@ -728,7 +716,7 @@ void StackResizeUp(stack_t *stk, const char *callFile, const char *callFunc, ssi
     
 #ifdef CANARY_PROTECTION
 
-    ssize_t *temp = (ssize_t *)realloc((stk->data - 1), sizeof(stk->data[0]) * ((stk->capacity + 1)* 2));
+    stackType *temp = (stackType *)realloc((stk->data - 1), sizeof(stackType) * ((stk->capacity + 1)* 2));
     
     if(temp == NULL){
         printf("It isn't possible to increase stack((\n");
@@ -754,7 +742,7 @@ void StackResizeUp(stack_t *stk, const char *callFile, const char *callFunc, ssi
 
 #else
 
-    void *temp = realloc((stk->data), sizeof(stk->data[0]) * (stk->capacity* 2));
+    void *temp = realloc((stk->data), sizeof(stackType) * (stk->capacity* 2));
 
     if(temp == NULL){
         printf("It wasn't possible to increase stack((\n");
@@ -767,7 +755,7 @@ void StackResizeUp(stack_t *stk, const char *callFile, const char *callFunc, ssi
 
         return;
     }
-    stk->data = (ssize_t *)temp;
+    stk->data = (stackType *)temp;
     stk->capacity *= 2;
 
 #endif
@@ -796,7 +784,7 @@ void StackResizeDown(stack_t *stk, const char *callFile, const char *callFunc, s
     
 #ifdef CANARY_PROTECTION
 
-    ssize_t *temp = (ssize_t *)realloc((stk->data - 1), sizeof(stk->data[0]) * ((stk->capacity + 2) / 2 + 1));
+    stackType *temp = (stackType *)realloc((stk->data - 1), sizeof(stackType) * ((stk->capacity + 2) / 2 + 1));
     
     if(temp == NULL){
         printf("It wasn't possible to increase stack((\n");
@@ -821,7 +809,7 @@ void StackResizeDown(stack_t *stk, const char *callFile, const char *callFunc, s
 
 #else
 
-    void *temp = realloc(stk->data, sizeof(stk->data[0]) * (stk->capacity / 2));
+    void *temp = realloc(stk->data, sizeof(stackType) * (stk->capacity / 2));
     if(temp == NULL){
         printf("It wasn't possible to reduce stack((\n");
 
@@ -834,7 +822,7 @@ void StackResizeDown(stack_t *stk, const char *callFile, const char *callFunc, s
         return;
     }
 
-    stk->data = (ssize_t *)temp;
+    stk->data = (stackType *)temp;
     stk->capacity /= 2;
 
 #endif
@@ -874,14 +862,14 @@ void _StackPrintf(const stack_t *stk, const char *callFile, const char *callFunc
 
 #endif
 
-    printf("size = %lld\tcapacity = %lld\n", stk->size, stk->capacity);
+    printf("size = %d\tcapacity = %d\n", stk->size, stk->capacity);
     
     if (stk->size == 0){
         printf("Stack is empty:(\n");
     }
     
     for(ssize_t i = 0; i < stk->size; i++){
-        printf("[%lld]\t", stk->data[i]);
+        printf("[%d]\t", stk->data[i]);
     }
 
     printf("\n===================================================================================\n");
