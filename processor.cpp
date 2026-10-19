@@ -6,7 +6,15 @@
 #include "strhandler.hpp"
 #include "config.hpp"
 
+const int VRAM = 64;
+const int width = 17;
+const int hight = 8;
 
+enum drawMode{
+    consoleBin = 1,
+    consoleChar = 2,
+    graphicRaylib = 3
+};
 
 struct processor{
     stack_t *stackFrame;
@@ -15,10 +23,8 @@ struct processor{
     int IP;
     stack_t *Label;
     int Registers[5];
-    int RAM[192];
+    int RAM[VRAM + width * hight]; //    64 + 17x8
 };
-
-const int VRAM = 64;
 
 
 
@@ -37,11 +43,17 @@ void cmdPUSH(processor *APM);
 void cmdPOP(processor *APM);
 void cmdPUSHR(processor *APM);
 void cmdPOPR(processor *APM);
+void cmdPUSHM(processor *APM);
+void cmdPOPM(processor *APM);
 void cmdADD(processor *APM);
 void cmdSUB(processor *APM);
 void cmdMUL(processor *APM);
 void cmdDIV(processor *APM);
+void cmdPOW(processor *APM);
+void cmdDRAW(processor *APM);
 
+void _cmdDrawConsoleBin(processor *APM);
+void _cmdDrawConsoleChar(processor *APM);
 
 
 int main(){
@@ -164,6 +176,14 @@ void DoInstruction(processor *APM){
             cmdPOPR(APM);
             return;
 
+        case PUSHM:
+            cmdPUSHM(APM);
+            return;
+
+        case POPM:
+            cmdPOPM(APM);
+            return;
+
         case ADD:
             cmdADD(APM);
             return;
@@ -178,6 +198,14 @@ void DoInstruction(processor *APM){
 
         case DIV:
             cmdDIV(APM);
+            return;
+
+        case POW:
+            cmdPOW(APM);
+            return;
+        
+        case DRAW:
+            cmdDRAW(APM);
             return;
 
         default:
@@ -211,17 +239,40 @@ void cmdPOP(processor *APM){
 }
 
 void cmdPUSHR(processor *APM){
-    StackPush(APM->stackFrame, &(APM->Registers[APM->IP + 1]));
+
+    //printf("(push)Reg before: %d\n", APM->Registers[APM->code[APM->IP + 1]]);
+
+    StackPush(APM->stackFrame, &(APM->Registers[APM->code[APM->IP + 1]]));
+
+    //printf("(push)Reg after(must not change): %d\n", APM->Registers[APM->code[APM->IP + 1]]);
 
     APM->IP += 2;
 }
 
 void cmdPOPR(processor *APM){
-    StackPop(APM->stackFrame, &(APM->Registers[APM->IP + 1]));
+    
+    //printf("(pop)Reg before: %d\n", APM->Registers[APM->code[APM->IP + 1]]);
+
+    StackPop(APM->stackFrame, &(APM->Registers[APM->code[APM->IP + 1]]));
+
+    //printf("(pop)Reg after: %d\n", APM->Registers[APM->code[APM->IP + 1]]);
 
     APM->IP += 2;
 }
 
+void cmdPUSHM(processor *APM){
+
+    StackPush(APM->stackFrame, &(APM->RAM[APM->code[APM->IP + 1]]));
+
+    APM->IP += 2;
+}
+
+void cmdPOPM(processor *APM){
+
+    StackPop(APM->stackFrame, &(APM->RAM[APM->code[APM->IP + 1]]));
+
+    APM->IP += 2;
+}
 
 void cmdADD(processor *APM){
     int elem1 = 0;
@@ -273,6 +324,52 @@ void cmdDIV(processor *APM){
     StackPush(APM->stackFrame, &div);
 
     APM->IP++;
+}
+
+void cmdPOW(processor *APM){
+    int elem = 0;
+    StackPop(APM->stackFrame, &elem);
+
+    int res = 1;
+
+    for(int i = 0; i < APM->code[APM->IP + 1]; i++){
+        res *= elem;
+    }
+
+    StackPush(APM->stackFrame, &res);
+
+    APM->IP += 2;
+}
+
+void cmdDRAW(processor *APM){
+    if(APM->code[APM->IP + 1] == consoleBin){
+        _cmdDrawConsoleBin(APM);
+    }
+
+    APM->IP += 2;
+}
+
+void _cmdDrawConsoleBin(processor *APM){
+    for(int  i = 0; i < hight; i++){
+        for(int j = 0; j < width; j++){
+            if(APM->RAM[VRAM + width * i + j] == 0){            
+                printf(".");
+            }
+            else{
+                printf("#");
+            }
+        }
+        printf("\n");
+    }
+}
+
+void _cmdDrawConsoleChar(processor *APM){
+    for(int  i = 0; i < hight; i++){
+        for(int j = 0; j < width; j++){
+            printf("%c", APM->RAM[VRAM + width * i + j]);
+        }
+        printf("\n");
+    }
 }
 
 void ProcessorDestructor(processor *APM, strInfo *programInfo){

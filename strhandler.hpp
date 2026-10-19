@@ -142,7 +142,7 @@ strErrorList OpenInFile(strInfo *programInfo){
     programInfo->bufSize = fileStat.st_size;
     if (programInfo->bufSize >= (size_t)1<<16) {return RETURN_ERROR_TOO_LARGE_FILE_SIZE;};
 
-    printf("bufSize = %d\n", programInfo->bufSize);
+    //printf("bufSize = %d\n", programInfo->bufSize);
 
     return RETURN_STR_SUCCESS;
 }
@@ -174,7 +174,7 @@ strErrorList ReadInFile(strInfo *programInfo){
     
     close(programInfo->fileInDescriptor);
 
-    printf("buffer - [%s]\n", programInfo->buffer);
+    //printf("buffer - [%s]\n", programInfo->buffer);
 
     return RETURN_STR_SUCCESS;
 }

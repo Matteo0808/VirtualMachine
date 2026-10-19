@@ -4,6 +4,11 @@
 #include "strhandler.hpp"
 #include "config.hpp"
 
+enum args{
+    NO_ARGS = 1,
+    ONE_ARG = 2
+};
+
 struct assembler{
     int *byteCode;
     unsigned int byteCodeLen;
@@ -18,22 +23,37 @@ struct instruction{
 void AssemblerConstructor(strInfo **programInfo, assembler **ass, const char *fileName);
 void AssemblerDestructor(strInfo *programInfo, assembler *ass);
 
+void Translator(strInfo *programInfo, assembler *ass);
+
 commands CheckCommandNoArgs(char *str);
 commands CheckCommandWithArgs(char *str);
 int CheckArgument(char *str, instruction *instr);
 registers IsRegister(char *str);
-
-void Translator(strInfo *programInfo, assembler *ass);
+commands CheckCommandMemory(char *str);
 
 void CreateCodeFile(strInfo *programInfo, assembler *ass);
 
-int main(){
+//TODO - jmp??? ask
+
+//TODO - comments
+
+//TODO - grafic
+
+//TODO - how to remake asm file
+
+//TODO - how to fill file? make c program?
+
+int main(int argc, char *argv[]){
+
+    if(argc != 2){
+        abort();
+    }
     
     strInfo *env;
     
     assembler *assembler;
 
-    AssemblerConstructor(&env, &assembler, "code.asm"); //TODO - argv
+    AssemblerConstructor(&env, &assembler, argv[1]); //TODO - argv
 
     OpenInFile(env);
 
@@ -89,16 +109,23 @@ void Translator(strInfo *programInfo, assembler *ass){
 
     for (int index = 0; index < programInfo->arrSize; index++){
                 
-        char tempStr1[5];
-        char tempStr2[11]; //TODO - rename
+        char strCommand[5];
+        char strArgument[11];
+        int intArgument = 0;
 
-        int check = sscanf((programInfo->arrLines)[index].line, "%s %s", tempStr1, tempStr2);
+        int checkSscanf = sscanf((programInfo->arrLines)[index].line, "%s %s", strCommand, strArgument);
 
-        //TODO rename check
+        //printf("sscanf = %d\n", checkSscanf);
+        
+        if (checkSscanf == NO_ARGS){
 
-        if (check == 1){ //TODO - enum 1 2
+            //printf("check = 1; cmd = %s\n", strCommand);
+/*
+            if (sscanf(strArgument, ":%s") == 1){
 
-            instr.cmd = CheckCommandNoArgs(tempStr1);
+            }
+*/
+            instr.cmd = CheckCommandNoArgs(strCommand);
 
             if (instr.cmd == ERR){
                 printf("Command error\n");
@@ -112,11 +139,25 @@ void Translator(strInfo *programInfo, assembler *ass){
             continue;
         }
         
-        if (check == 2){
+        if (checkSscanf == ONE_ARG){
 
-            instr.cmd = CheckCommandWithArgs(tempStr1);
+            if(sscanf((programInfo->arrLines)[index].line, "%s [%d]", &strCommand, &intArgument) == 2){
 
-            instr.arg = CheckArgument(tempStr2, &instr);
+                ass->byteCode[ass->instrPtr] = CheckCommandMemory(strCommand);
+                
+                ass->byteCode[ass->instrPtr + 1] = intArgument;
+
+                ass->instrPtr += 2;
+
+                continue;
+            }   
+
+            // printf("check = 2; cmd = %s\n", strCommand);
+            // printf("check = 2; arg = %s\n", strArgument);
+
+            instr.cmd = CheckCommandWithArgs(strCommand);
+
+            instr.arg = CheckArgument(strArgument, &instr);
 
             if (instr.cmd == ERR){
                 printf("Command error\n");
@@ -143,6 +184,12 @@ void Translator(strInfo *programInfo, assembler *ass){
         else{
             instr.cmd = ERR;
         }
+    DEBUG( 
+        printf("ass->byteCode:\n");
+        for(int i = 0; i < ass->byteCodeLen; i++){
+            printf("%d: [%d]\n", i, ass->byteCode[i]);
+        }
+    )
     }
 }
 
@@ -189,59 +236,73 @@ commands CheckCommandWithArgs(char *str){
     }
 
     if (strcmp(str, "POP") == 0){
-        return POPR;
+        return POP;
+    }
+
+    if(strcmp(str, "POW") == 0){
+        return POW;
+    }
+    if(strcmp(str, "DRAW") == 0){
+        return DRAW;
     }
 
     else{
+        printf("ERR?\n");
         return ERR;
     }
 }
 
 int CheckArgument(char *str, instruction *instr){
 
-    int tempInt = 0; //TODO rename
+    int argument = 0;
 
-    int check = sscanf(str, "%d", &tempInt);
+    int checkSscanf = sscanf(str, "%d", &argument);
 
-    if (check == 1){
-        return tempInt;
+    if (checkSscanf == 1){
+        return argument;
     }
 
     else{
-        char tempStr[3];
+        char reg[3];
 
-        sscanf(str, "%s", tempStr);
+        sscanf(str, "%s", reg);
 
-        registers tempReg = IsRegister(tempStr);
+        registers tempReg = IsRegister(reg);
 
         if (instr->cmd == PUSH){      
 
             if (tempReg){
-
-                instr->arg = (int)tempReg;
-
+                
                 instr->cmd = PUSHR;
+                
+                return tempReg;
 
             }
             else{
 
                 instr->cmd = ERR;
+
+                return RERR;
 
             }
         }
         if (instr->cmd == POP){    
 
             if (tempReg){
-                
-                instr->arg = (int)tempReg;
+
+                //printf("reg = %d\n", tempReg);
 
                 instr->cmd = POPR;
+                
+                return tempReg;
 
             }
 
             else{
 
                 instr->cmd = ERR;
+
+                return RERR;
 
             }
         }
@@ -269,6 +330,18 @@ registers IsRegister(char *str){
 
     else{
         return RERR;
+    }
+}
+
+commands CheckCommandMemory(char *str){
+    if(strcmp(str, "PUSH") == 0){
+        return PUSHM;
+    }
+    if(strcmp(str, "POP") == 0){
+        return POPM;
+    }
+    else{
+        return ERR;
     }
 }
 
