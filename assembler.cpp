@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <string.h>
-
 #include "strhandler.hpp"
+#include "stack.hpp"
 #include "config.hpp"
+
+const int labelSize = 16;
+const char *fileOutName = "code.txt";
 
 enum args{
     NO_ARGS = 1,
@@ -13,6 +16,7 @@ struct assembler{
     int *byteCode;
     unsigned int byteCodeLen;
     int instrPtr;
+    int Label[labelSize];
 };
 
 struct instruction{
@@ -23,13 +27,17 @@ struct instruction{
 void AssemblerConstructor(strInfo **programInfo, assembler **ass, const char *fileName);
 void AssemblerDestructor(strInfo *programInfo, assembler *ass);
 
+void DoubleAssembling(strInfo *programInfo, assembler *ass);
 void Translator(strInfo *programInfo, assembler *ass);
 
 commands CheckCommandNoArgs(char *str);
 commands CheckCommandWithArgs(char *str);
 int CheckArgument(char *str, instruction *instr);
 registers IsRegister(char *str);
+commands CheckCommandJump(char *str);
 commands CheckCommandMemory(char *str);
+
+void SetLabelMinusOne(assembler *ass);
 
 void CreateCodeFile(strInfo *programInfo, assembler *ass);
 
@@ -73,7 +81,13 @@ DEBUG(
     }
 )
 
-    Translator(env, assembler);
+    DoubleAssembling(env, assembler);
+
+    //Translator(env, assembler);
+
+    for(int i = 0; i < 16; i++){
+        printf("label %d: %d\n", i, assembler->Label[i]);
+    }
 
 DEBUG(
     for (int i = 0; i < assembler->byteCodeLen; i++){
@@ -93,6 +107,8 @@ void AssemblerConstructor(strInfo **programInfo, assembler **ass, const char *fi
     *programInfo = (strInfo *)calloc(1, sizeof(strInfo));
 
     *ass = (assembler *)calloc(1, sizeof(assembler));
+
+    SetLabelMinusOne(*ass);
 
     (*ass)->instrPtr = 0;
 
@@ -114,17 +130,25 @@ void Translator(strInfo *programInfo, assembler *ass){
         int intArgument = 0;
 
         int checkSscanf = sscanf((programInfo->arrLines)[index].line, "%s %s", strCommand, strArgument);
-
-        //printf("sscanf = %d\n", checkSscanf);
         
         if (checkSscanf == NO_ARGS){
 
-            //printf("check = 1; cmd = %s\n", strCommand);
-/*
-            if (sscanf(strArgument, ":%s") == 1){
+            printf("check = 1; cmd = %s\n", strCommand);
 
+            int intLabel = 0;
+
+            if (sscanf(strCommand, ":%d", &intLabel) == 1){
+
+                printf("intLabel = %d\n", intLabel);
+
+                ass->Label[intLabel] = index + 1;
+
+                printf("label = %d, index + 1 = %d\n", intLabel, index + 1);
+
+                continue;
             }
-*/
+            
+
             instr.cmd = CheckCommandNoArgs(strCommand);
 
             if (instr.cmd == ERR){
@@ -143,6 +167,8 @@ void Translator(strInfo *programInfo, assembler *ass){
 
             if(sscanf((programInfo->arrLines)[index].line, "%s [%d]", &strCommand, &intArgument) == 2){
 
+                printf("memory?\n");
+
                 ass->byteCode[ass->instrPtr] = CheckCommandMemory(strCommand);
                 
                 ass->byteCode[ass->instrPtr + 1] = intArgument;
@@ -150,10 +176,23 @@ void Translator(strInfo *programInfo, assembler *ass){
                 ass->instrPtr += 2;
 
                 continue;
-            }   
+            }
 
-            // printf("check = 2; cmd = %s\n", strCommand);
-            // printf("check = 2; arg = %s\n", strArgument);
+            if(sscanf((programInfo->arrLines)[index].line, "%s :%d", &strCommand, &intArgument) == 2){
+
+                printf("jump?\n");
+                
+                ass->byteCode[ass->instrPtr] = CheckCommandJump(strCommand);
+
+                ass->byteCode[ass->instrPtr + 1] = ass->Label[intArgument];
+
+                ass->instrPtr += 2;
+
+                continue;
+            }
+
+            printf("check = 2; cmd = %s\n", strCommand);
+            printf("check = 2; arg = %s\n", strArgument);
 
             instr.cmd = CheckCommandWithArgs(strCommand);
 
@@ -169,7 +208,7 @@ void Translator(strInfo *programInfo, assembler *ass){
             }
 
         DEBUG(
-            printf("BIGPRINTF:\nass->instrPtr = %d\ninstr.cmd = %d\ninstr.arg = %d\n\n", ass->instrPtr, instr.cmd, instr.arg);
+            printf("\nBIGPRINTF:\nass->instrPtr = %d\ninstr.cmd = %d\ninstr.arg = %d\n\n", ass->instrPtr, instr.cmd, instr.arg);
         )
 
             ass->byteCode[ass->instrPtr] = instr.cmd;
@@ -191,6 +230,14 @@ void Translator(strInfo *programInfo, assembler *ass){
         }
     )
     }
+}
+
+void DoubleAssembling(strInfo *programInfo, assembler *ass){
+    Translator(programInfo, ass);
+
+    ass->instrPtr = 0;
+
+    Translator(programInfo, ass);
 }
 
 
@@ -290,8 +337,6 @@ int CheckArgument(char *str, instruction *instr){
 
             if (tempReg){
 
-                //printf("reg = %d\n", tempReg);
-
                 instr->cmd = POPR;
                 
                 return tempReg;
@@ -333,6 +378,30 @@ registers IsRegister(char *str){
     }
 }
 
+commands CheckCommandJump(char *str){
+    if(strcmp(str, "JMP") == 0){
+        return JMP;
+    }
+    if(strcmp(str, "JA") == 0){
+        return JA;
+    }
+    if(strcmp(str, "JAE") == 0){
+        return JAE;
+    }
+    if(strcmp(str, "JB") == 0){
+        return JB;
+    }
+    if(strcmp(str, "JBE") == 0){
+        return JBE;
+    }
+    if(strcmp(str, "JE") == 0){
+        return JE;
+    }
+    else{
+        return ERR;
+    }
+}
+
 commands CheckCommandMemory(char *str){
     if(strcmp(str, "PUSH") == 0){
         return PUSHM;
@@ -347,7 +416,7 @@ commands CheckCommandMemory(char *str){
 
 void CreateCodeFile(strInfo *programInfo, assembler *ass){
 
-    programInfo->fileOut = fopen("code.txt", "w");
+    programInfo->fileOut = fopen(fileOutName, "w");
 
     for(int i = 0; i < ass->byteCodeLen; i++){
         fprintf(programInfo->fileOut, "%d ", ass->byteCode[i]);
@@ -363,4 +432,8 @@ void AssemblerDestructor(strInfo *programInfo, assembler *ass){
     free(ass->byteCode);
     free(ass);
     free(programInfo);
+}
+
+void SetLabelMinusOne(assembler *ass){
+    memset(ass->Label, -1, sizeof(int) * labelSize);
 }

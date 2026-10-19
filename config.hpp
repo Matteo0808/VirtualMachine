@@ -1,3 +1,8 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+
+
 enum commands{
     ERR = -1,
     HLT = 0,
@@ -19,7 +24,8 @@ enum commands{
     JB = 16,
     JBE = 17,
     JE = 18,
-    DRAW = 19
+    JNE = 19,
+    DRAW = 20
 };
 
 enum registers{
@@ -30,3 +36,7 @@ enum registers{
     RCX = 3,
     RDX = 4
 };
+
+
+
+#endif

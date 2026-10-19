@@ -21,7 +21,6 @@ struct processor{
     int *code;
     int codeLen;
     int IP;
-    stack_t *Label;
     int Registers[5];
     int RAM[VRAM + width * hight]; //    64 + 17x8
 };
@@ -50,6 +49,13 @@ void cmdSUB(processor *APM);
 void cmdMUL(processor *APM);
 void cmdDIV(processor *APM);
 void cmdPOW(processor *APM);
+void cmdJMP(processor *APM);
+void cmdJA(processor *APM);
+void cmdJAE(processor *APM);
+void cmdJB(processor *APM);
+void cmdJBE(processor *APM);
+void cmdJE(processor *APM);
+void cmdJNE(processor *APM);
 void cmdDRAW(processor *APM);
 
 void _cmdDrawConsoleBin(processor *APM);
@@ -208,6 +214,34 @@ void DoInstruction(processor *APM){
             cmdDRAW(APM);
             return;
 
+        case JMP:
+            cmdJMP(APM);
+            return;
+        
+        case JA:
+            cmdJA(APM);
+            return;
+        
+        case JAE:
+            cmdJAE(APM);
+            return;
+
+        case JB:
+            cmdJB(APM);
+            return;
+
+        case JBE:
+            cmdJBE(APM);
+            return;
+
+        case JE:
+            cmdJE(APM);
+            return;
+
+        case JNE:
+            cmdJNE(APM);
+            return;
+
         default:
             abort();
     }
@@ -218,7 +252,7 @@ void cmdOUT(processor *APM){
     int out = 0;
     StackPop(APM->stackFrame, &out);
 
-    printf("<<%d>>", out);
+    printf("<<%d>>\n", out);
 
     APM->IP++;
 }
@@ -230,7 +264,7 @@ void cmdPUSH(processor *APM){
 }
 
 void cmdPOP(processor *APM){
-    int *pop = (int *)calloc(1, sizeof(int));
+    int *pop = (int *)malloc(sizeof(int));
     StackPop(APM->stackFrame, pop);
 
     APM->IP++;
@@ -240,22 +274,14 @@ void cmdPOP(processor *APM){
 
 void cmdPUSHR(processor *APM){
 
-    //printf("(push)Reg before: %d\n", APM->Registers[APM->code[APM->IP + 1]]);
-
     StackPush(APM->stackFrame, &(APM->Registers[APM->code[APM->IP + 1]]));
-
-    //printf("(push)Reg after(must not change): %d\n", APM->Registers[APM->code[APM->IP + 1]]);
 
     APM->IP += 2;
 }
 
 void cmdPOPR(processor *APM){
-    
-    //printf("(pop)Reg before: %d\n", APM->Registers[APM->code[APM->IP + 1]]);
 
     StackPop(APM->stackFrame, &(APM->Registers[APM->code[APM->IP + 1]]));
-
-    //printf("(pop)Reg after: %d\n", APM->Registers[APM->code[APM->IP + 1]]);
 
     APM->IP += 2;
 }
@@ -275,11 +301,11 @@ void cmdPOPM(processor *APM){
 }
 
 void cmdADD(processor *APM){
-    int elem1 = 0;
-    StackPop(APM->stackFrame, &elem1);
-
     int elem2 = 0;
     StackPop(APM->stackFrame, &elem2);
+
+    int elem1 = 0;
+    StackPop(APM->stackFrame, &elem1);
 
     int add = elem1 + elem2;
     StackPush(APM->stackFrame, &add);
@@ -301,11 +327,11 @@ void cmdSUB(processor *APM){
 }
 
 void cmdMUL(processor *APM){
-    int elem1 = 0;
-    StackPop(APM->stackFrame, &elem1);
-
     int elem2 = 0;
     StackPop(APM->stackFrame, &elem2);
+
+    int elem1 = 0;
+    StackPop(APM->stackFrame, &elem1);
 
     int mul = elem1 * elem2;
     StackPush(APM->stackFrame, &mul);
@@ -339,6 +365,118 @@ void cmdPOW(processor *APM){
     StackPush(APM->stackFrame, &res);
 
     APM->IP += 2;
+}
+
+void cmdJMP(processor *APM){
+    APM->IP = APM->code[APM->IP + 1];
+}
+
+void cmdJA(processor *APM){
+    int elem2 = 0;
+    StackPop(APM->stackFrame, &elem2);
+
+    int elem1 = 0;
+    StackPop(APM->stackFrame, &elem1);
+
+    if(elem1 > elem2){
+        APM->IP = APM->code[APM->IP + 1];
+    }
+    else{
+        APM->IP += 2;
+    }
+
+    StackPush(APM->stackFrame, &elem1);
+    StackPush(APM->stackFrame, &elem2);
+}
+
+void cmdJAE(processor *APM){
+    int elem2 = 0;
+    StackPop(APM->stackFrame, &elem2);
+
+    int elem1 = 0;
+    StackPop(APM->stackFrame, &elem1);
+
+    if(elem1 >= elem2){
+        APM->IP = APM->code[APM->IP + 1];
+    }
+    else{
+        APM->IP += 2;
+    }
+
+    StackPush(APM->stackFrame, &elem1);
+    StackPush(APM->stackFrame, &elem2);
+}
+
+void cmdJB(processor *APM){
+    int elem2 = 0;
+    StackPop(APM->stackFrame, &elem2);
+
+    int elem1 = 0;
+    StackPop(APM->stackFrame, &elem1);
+
+    if(elem1 < elem2){
+        APM->IP = APM->code[APM->IP + 1];
+    }
+    else{
+        APM->IP += 2;
+    }
+
+    StackPush(APM->stackFrame, &elem1);
+    StackPush(APM->stackFrame, &elem2);
+}
+
+void cmdJBE(processor *APM){
+    int elem2 = 0;
+    StackPop(APM->stackFrame, &elem2);
+
+    int elem1 = 0;
+    StackPop(APM->stackFrame, &elem1);
+
+    if(elem1 <= elem2){
+        APM->IP = APM->code[APM->IP + 1];
+    }
+    else{
+        APM->IP += 2;
+    }
+
+    StackPush(APM->stackFrame, &elem1);
+    StackPush(APM->stackFrame, &elem2);
+}
+
+void cmdJE(processor *APM){
+    int elem2 = 0;
+    StackPop(APM->stackFrame, &elem2);
+
+    int elem1 = 0;
+    StackPop(APM->stackFrame, &elem1);
+
+    if(elem1 == elem2){
+        APM->IP = APM->code[APM->IP + 1];
+    }
+    else{
+        APM->IP += 2;
+    }
+
+    StackPush(APM->stackFrame, &elem1);
+    StackPush(APM->stackFrame, &elem2);
+}
+
+void cmdJNE(processor *APM){
+    int elem2 = 0;
+    StackPop(APM->stackFrame, &elem2);
+
+    int elem1 = 0;
+    StackPop(APM->stackFrame, &elem1);
+
+    if(elem1 != elem2){
+        APM->IP = APM->code[APM->IP + 1];
+    }
+    else{
+        APM->IP += 2;
+    }
+
+    StackPush(APM->stackFrame, &elem1);
+    StackPush(APM->stackFrame, &elem2);
 }
 
 void cmdDRAW(processor *APM){

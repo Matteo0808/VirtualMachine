@@ -1,0 +1,7 @@
+PUSH 20
+PUSH 30
+JE :2
+PUSH 30
+:2
+OUT
+HLT

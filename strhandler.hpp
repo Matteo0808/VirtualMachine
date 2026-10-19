@@ -154,8 +154,6 @@ strErrorList ReadInFile(strInfo *programInfo){
 
     if (bufferTemp == NULL) {return RETURN_ERROR_MEMORY_ALLOCATION;};
     
-    DEBUG(printf("bufTemp = %p\n", bufferTemp);)
-
     programInfo->buffer = bufferTemp + 1;
 
 #ifndef ONE_LINE_BUFFER
@@ -163,8 +161,6 @@ strErrorList ReadInFile(strInfo *programInfo){
     programInfo->buffer[programInfo->bufSize] = '\n';
     
 #endif
-
-    DEBUG(printf("buf = %p\n", programInfo->buffer);)
 
     if (read(programInfo->fileInDescriptor, programInfo->buffer, programInfo->bufSize) <= 0){
         close(programInfo->fileInDescriptor);
