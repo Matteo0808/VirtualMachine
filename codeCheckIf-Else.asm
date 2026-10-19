@@ -1,7 +1,7 @@
-PUSH 20
 PUSH 10
-JBE :1
+PUSH 20
 
+JAE :1
 PUSH 0
 OUT
 JMP :2
@@ -9,7 +9,6 @@ JMP :2
 :1
 PUSH 1
 OUT
-
 :2
 PUSH 666
 OUT

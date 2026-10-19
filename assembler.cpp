@@ -141,7 +141,7 @@ void Translator(strInfo *programInfo, assembler *ass){
 
                 printf("intLabel = %d\n", intLabel);
 
-                ass->Label[intLabel] = index + 1;
+                ass->Label[intLabel] = ass->instrPtr;
 
                 printf("label = %d, index + 1 = %d\n", intLabel, index + 1);
 
