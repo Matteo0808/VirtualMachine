@@ -1,0 +1,5 @@
+IN
+POP AX
+PUSH AX
+OUT
+HLT

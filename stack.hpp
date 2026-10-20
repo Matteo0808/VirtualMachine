@@ -6,8 +6,8 @@
 #include <assert.h>
 
 //#define DEBUG_MODE
-//#define CANARY_PROTECTION
-//#define HASH_PROTECTION
+#define CANARY_PROTECTION
+#define HASH_PROTECTION
 
 #ifdef DEBUG_MODE
     #define DEBUG(...) __VA_ARGS__

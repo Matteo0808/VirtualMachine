@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <time.h>
+
 #include "stack.hpp"
 
 #define ONE_LINE_BUFFER
@@ -13,15 +15,19 @@ const int hight = 8;
 enum drawMode{
     consoleBin = 1,
     consoleChar = 2,
-    graphicRaylib = 3
+    graphicsRaylib = 3
 };
 
 struct processor{
     stack_t *stackFrame;
+    stack_t *labelRecursion;
+
     int *code;
     int codeLen;
     int IP;
+
     int Registers[5];
+
     int RAM[VRAM + width * hight]; //    64 + 17x8
 };
 
@@ -37,6 +43,7 @@ void CreateCodeList(processor *APM, strInfo *programInfo);
 void Processing(processor *APM);
 void DoInstruction(processor *APM);
 
+void cmdIN(processor *APM);
 void cmdOUT(processor *APM);
 void cmdPUSH(processor *APM);
 void cmdPOP(processor *APM);
@@ -56,7 +63,10 @@ void cmdJB(processor *APM);
 void cmdJBE(processor *APM);
 void cmdJE(processor *APM);
 void cmdJNE(processor *APM);
+void cmdJSUN(processor *APM);
 void cmdDRAW(processor *APM);
+void cmdCALL(processor *APM);
+void cmdRET(processor *APM);
 
 void _cmdDrawConsoleBin(processor *APM);
 void _cmdDrawConsoleChar(processor *APM);
@@ -101,6 +111,7 @@ void ProcessorConstructor(processor **APM, strInfo **programInfo, const char *fi
 
     (*APM)->stackFrame = StackConstructor(globalMinCapacity, "stackFrame");
 
+    (*APM)->labelRecursion = StackConstructor(globalMinCapacity, "labelRecursion");
 }
 
 void CreateCode(processor *APM, strInfo *programInfo){
@@ -161,6 +172,10 @@ void DoInstruction(processor *APM){
 
         case HLT:
             abort();
+
+        case IN:
+            cmdIN(APM);
+            return;
 
         case OUT:
             cmdOUT(APM);
@@ -242,11 +257,34 @@ void DoInstruction(processor *APM){
             cmdJNE(APM);
             return;
 
+        case JSUN:
+            cmdJSUN(APM);
+            return;
+
+        case CALL:
+            cmdCALL(APM);
+            return;
+
+        case RET:
+            cmdRET(APM);
+            return;
+
         default:
             abort();
     }
 }
 
+void cmdIN(processor *APM){
+    int in = 0;
+    if(scanf("%d", &in) == 1){
+        StackPush(APM->stackFrame, &in);
+        APM->IP++;
+    }
+    else{
+        printf("Invalid input\n");
+        abort();
+    }
+}
 
 void cmdOUT(processor *APM){    
     int out = 0;
@@ -479,12 +517,44 @@ void cmdJNE(processor *APM){
     StackPush(APM->stackFrame, &elem2);
 }
 
+void cmdJSUN(processor *APM){
+    
+    time_t varTime = time(NULL);
+
+    tm *locTime = localtime(&varTime);
+    
+    if(locTime->tm_wday == 0){
+        APM->IP = APM->code[APM->IP + 1];
+    }
+    else{
+        APM->IP += 2;
+    }
+}
 void cmdDRAW(processor *APM){
     if(APM->code[APM->IP + 1] == consoleBin){
         _cmdDrawConsoleBin(APM);
     }
 
     APM->IP += 2;
+}
+
+void cmdCALL(processor *APM){
+
+    printf("IP = %d, IP + 2 = %d\n", APM->IP, APM->IP + 2);
+
+    int newIP = APM->IP + 2;
+
+    StackPush(APM->labelRecursion, &newIP);
+    
+    cmdJMP(APM);
+}
+//3 10 3 20 23 8 2 0 9 24 0 0 0 0 0 0
+void cmdRET(processor *APM){
+    printf("IP BEFORE: %d\n", APM->IP);
+
+    StackPop(APM->labelRecursion, &(APM->IP));
+
+    printf("IP AFTER: %d\n", APM->IP);
 }
 
 void _cmdDrawConsoleBin(processor *APM){

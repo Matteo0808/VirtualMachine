@@ -1,0 +1,16 @@
+PUSH 10
+PUSH 20
+CALL :0
+
+OUT
+HLT
+
+:0
+ADD
+CALL :1
+RET
+
+:1
+PUSH 5
+SUB
+RET

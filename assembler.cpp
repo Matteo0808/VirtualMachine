@@ -85,15 +85,16 @@ DEBUG(
 
     //Translator(env, assembler);
 
+    printf("Labels:\n");
     for(int i = 0; i < 16; i++){
         printf("label %d: %d\n", i, assembler->Label[i]);
     }
 
-DEBUG(
+
     for (int i = 0; i < assembler->byteCodeLen; i++){
         printf("%d ", assembler->byteCode[i]);
     }
-)
+
 
     CreateCodeFile(env, assembler);
 
@@ -139,11 +140,9 @@ void Translator(strInfo *programInfo, assembler *ass){
 
             if (sscanf(strCommand, ":%d", &intLabel) == 1){
 
-                printf("intLabel = %d\n", intLabel);
-
                 ass->Label[intLabel] = ass->instrPtr;
 
-                printf("label = %d, index + 1 = %d\n", intLabel, index + 1);
+                printf("label = %d, instr = %d\n", intLabel, ass->instrPtr);
 
                 continue;
             }
@@ -214,21 +213,21 @@ void Translator(strInfo *programInfo, assembler *ass){
             ass->byteCode[ass->instrPtr] = instr.cmd;
             ass->byteCode[ass->instrPtr + 1] = instr.arg;
 
-        DEBUG(
+        //DEBUG(
             printf("command = <<%d>>, argument = <<%d>>\n", ass->byteCode[ass->instrPtr], ass->byteCode[ass->instrPtr + 1]);
-        )
+        //)
 
             ass->instrPtr += 2;
         }        
         else{
             instr.cmd = ERR;
         }
-    DEBUG( 
+    //DEBUG( 
         printf("ass->byteCode:\n");
         for(int i = 0; i < ass->byteCodeLen; i++){
             printf("%d: [%d]\n", i, ass->byteCode[i]);
         }
-    )
+    //)
     }
 }
 
@@ -245,6 +244,10 @@ commands CheckCommandNoArgs(char *str){
 
     if (strcmp(str, "HLT") == 0){
         return HLT;
+    }
+
+    if(strcmp(str, "IN") == 0){
+        return IN;
     }
 
     if (strcmp(str, "OUT") == 0){
@@ -269,7 +272,11 @@ commands CheckCommandNoArgs(char *str){
 
     if (strcmp(str, "POP") == 0){
         return POP;
-    } 
+    }
+
+    if (strcmp(str, "RET") == 0){
+        return RET;
+    }
 
     else{
         return ERR;
@@ -396,6 +403,12 @@ commands CheckCommandJump(char *str){
     }
     if(strcmp(str, "JE") == 0){
         return JE;
+    }
+    if(strcmp(str, "JSUN") == 0){
+        return JSUN;
+    }
+    if(strcmp(str, "CALL") == 0){
+        return CALL;
     }
     else{
         return ERR;
