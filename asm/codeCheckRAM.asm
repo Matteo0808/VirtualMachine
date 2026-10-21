@@ -1,0 +1,7 @@
+PUSH 20
+POP [5]
+PUSH [5]
+PUSH [5]
+ADD
+OUT
+HLT

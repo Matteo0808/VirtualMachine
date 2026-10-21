@@ -36,6 +36,7 @@ int CheckArgument(char *str, instruction *instr);
 registers IsRegister(char *str);
 commands CheckCommandJump(char *str);
 commands CheckCommandMemory(char *str);
+int CheckArgumentMemory(char *str, instruction *instr);
 
 void SetLabelMinusOne(assembler *ass);
 
@@ -61,14 +62,14 @@ int main(int argc, char *argv[]){
     
     assembler *assembler;
 
-    AssemblerConstructor(&env, &assembler, argv[1]); //TODO - argv
+    AssemblerConstructor(&env, &assembler, argv[1]);
 
     OpenInFile(env);
 
     ReadInFile(env);
-
+DEBUG(
     OutputUnsortedText(env);
-
+)
     ChangeEndlsToNulls(env);
 
     BufferToLinesFragmentation(env);
@@ -82,8 +83,6 @@ DEBUG(
 )
 
     DoubleAssembling(env, assembler);
-
-    //Translator(env, assembler);
 
     printf("Labels:\n");
     for(int i = 0; i < 16; i++){
@@ -116,19 +115,33 @@ void AssemblerConstructor(strInfo **programInfo, assembler **ass, const char *fi
     (*programInfo)->fileName = fileName;
 }
 
-void Translator(strInfo *programInfo, assembler *ass){
+void Translator(strInfo *programInfo, assembler *ass){ //TODO - 
+
+    ass->instrPtr = 0;
 
     ass->byteCodeLen = 2 * programInfo->arrSize;
 
     ass->byteCode = (int *)calloc(ass->byteCodeLen, sizeof(int));
 
-    instruction instr = {ERR, RERR};
+    instruction instr = {ERR, RERR}; //TODO - rename
 
     for (int index = 0; index < programInfo->arrSize; index++){
                 
         char strCommand[5];
         char strArgument[11];
         int intArgument = 0;
+
+        char strComment[2]; //TODO - хз че
+
+        char strMain[20];
+
+        if(sscanf((programInfo->arrLines)[index].line, ";%s", strComment) == 1){
+            continue;
+        }
+
+        if(sscanf((programInfo->arrLines)[index].line, "%[^;]", strMain) == 1){
+
+        }
 
         int checkSscanf = sscanf((programInfo->arrLines)[index].line, "%s %s", strCommand, strArgument);
         
@@ -164,17 +177,39 @@ void Translator(strInfo *programInfo, assembler *ass){
         
         if (checkSscanf == ONE_ARG){
 
-            if(sscanf((programInfo->arrLines)[index].line, "%s [%d]", &strCommand, &intArgument) == 2){
+            if(sscanf((programInfo->arrLines)[index].line, "%s [%s]", &strCommand, &strArgument) == 2){
 
                 printf("memory?\n");
 
-                ass->byteCode[ass->instrPtr] = CheckCommandMemory(strCommand);
-                
-                ass->byteCode[ass->instrPtr + 1] = intArgument;
+                if(sscanf((programInfo->arrLines)[index].line, "%s [%d]", &strCommand, &intArgument) == 2){
 
-                ass->instrPtr += 2;
+                    ass->byteCode[ass->instrPtr] = CheckCommandMemory(strCommand);
+                    
+                    ass->byteCode[ass->instrPtr + 1] = intArgument;
 
-                continue;
+                    ass->instrPtr += 2;
+
+                    continue;
+
+                }
+
+                else{
+                    instr.cmd = CheckCommandMemory(strCommand);
+
+                    printf("cmd mem = %d\n", instr.cmd);
+
+                    instr.arg = CheckArgument(strArgument, &instr);
+
+                    printf("cmd mem = %d, arg mem = %d\n", instr.cmd, instr.arg);
+
+                    ass->byteCode[ass->instrPtr] = instr.cmd;
+            
+                    ass->byteCode[ass->instrPtr + 1] = instr.arg;
+
+                    ass->instrPtr += 2;
+
+                    continue;
+                }
             }
 
             if(sscanf((programInfo->arrLines)[index].line, "%s :%d", &strCommand, &intArgument) == 2){
@@ -189,10 +224,10 @@ void Translator(strInfo *programInfo, assembler *ass){
 
                 continue;
             }
-
+        DEBUG(
             printf("check = 2; cmd = %s\n", strCommand);
-            printf("check = 2; arg = %s\n", strArgument);
-
+            printf("check = 2; arg m= %s\n", strArgument);
+        )
             instr.cmd = CheckCommandWithArgs(strCommand);
 
             instr.arg = CheckArgument(strArgument, &instr);
@@ -233,8 +268,6 @@ void Translator(strInfo *programInfo, assembler *ass){
 
 void DoubleAssembling(strInfo *programInfo, assembler *ass){
     Translator(programInfo, ass);
-
-    ass->instrPtr = 0;
 
     Translator(programInfo, ass);
 }
@@ -278,6 +311,14 @@ commands CheckCommandNoArgs(char *str){
         return RET;
     }
 
+    if(strcmp(str, "FACT") == 0){
+        return FACT;
+    }
+
+    if(strcmp(str, "FIB") == 0){
+        return FIB;
+    }
+
     else{
         return ERR;
     }
@@ -293,12 +334,14 @@ commands CheckCommandWithArgs(char *str){
         return POP;
     }
 
-    if(strcmp(str, "POW") == 0){
+    if (strcmp(str, "POW") == 0){
         return POW;
     }
-    if(strcmp(str, "DRAW") == 0){
+
+    if (strcmp(str, "DRAW") == 0){
         return DRAW;
     }
+
 
     else{
         printf("ERR?\n");
@@ -319,44 +362,45 @@ int CheckArgument(char *str, instruction *instr){
     else{
         char reg[3];
 
-        sscanf(str, "%s", reg);
+        int dbgCheck = sscanf(str, "%s", reg);
 
-        registers tempReg = IsRegister(reg);
+        printf("dbgcheck = %d\n", dbgCheck);
+        printf("reg = %s\n", reg);
 
-        if (instr->cmd == PUSH){      
+        registers tempReg = RERR;
 
-            if (tempReg){
-                
-                instr->cmd = PUSHR;
-                
+        if(sscanf(str, "%[^]]", reg)){
+            printf("chiks, reg = %s\n", reg);
+
+            tempReg = IsRegister(reg);
+        }
+        else{
+            tempReg = IsRegister(reg);
+        }
+
+        printf("tempReg = %d\n", tempReg);
+
+        if(tempReg){
+            if (instr->cmd == PUSH){         
+                instr->cmd = PUSHR;                
                 return tempReg;
-
             }
-            else{
-
-                instr->cmd = ERR;
-
-                return RERR;
-
+            if (instr->cmd == POP){
+                instr->cmd = POPR;                
+                return tempReg;
+            }
+            if (instr->cmd == PUSHM){        
+                instr->cmd = PUSHRM;                
+                return tempReg;
+            }
+            if (instr->cmd == POPM){
+                instr->cmd = POPRM;                
+                return tempReg;
             }
         }
-        if (instr->cmd == POP){    
-
-            if (tempReg){
-
-                instr->cmd = POPR;
-                
-                return tempReg;
-
-            }
-
-            else{
-
-                instr->cmd = ERR;
-
-                return RERR;
-
-            }
+        else{
+            instr->cmd = ERR;
+            return RERR;
         }
     }
     return RERR;

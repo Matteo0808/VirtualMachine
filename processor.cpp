@@ -51,6 +51,8 @@ void cmdPUSHR(processor *APM);
 void cmdPOPR(processor *APM);
 void cmdPUSHM(processor *APM);
 void cmdPOPM(processor *APM);
+void cmdPUSHRM(processor *APM);
+void cmdPOPRM(processor *APM);
 void cmdADD(processor *APM);
 void cmdSUB(processor *APM);
 void cmdMUL(processor *APM);
@@ -67,9 +69,19 @@ void cmdJSUN(processor *APM);
 void cmdDRAW(processor *APM);
 void cmdCALL(processor *APM);
 void cmdRET(processor *APM);
+void cmdFACT(processor *APM);
+void cmdFIB(processor *APM);
 
 void _cmdDrawConsoleBin(processor *APM);
 void _cmdDrawConsoleChar(processor *APM);
+
+int _cmdFactorial(int num);
+int _cmdFibonacci(int num);
+
+//TODO - refactor translator
+//TODO - str labels
+//TODO - do binary
+//TODO - refactor all
 
 
 int main(){
@@ -205,6 +217,14 @@ void DoInstruction(processor *APM){
             cmdPOPM(APM);
             return;
 
+        case PUSHRM:
+            cmdPUSHRM(APM);
+            return;
+
+        case POPRM:
+            cmdPOPRM(APM);
+                return;
+
         case ADD:
             cmdADD(APM);
             return;
@@ -267,6 +287,14 @@ void DoInstruction(processor *APM){
 
         case RET:
             cmdRET(APM);
+            return;
+
+        case FACT:
+            cmdFACT(APM);
+            return;
+
+        case FIB:
+            cmdFIB(APM);
             return;
 
         default:
@@ -334,6 +362,20 @@ void cmdPUSHM(processor *APM){
 void cmdPOPM(processor *APM){
 
     StackPop(APM->stackFrame, &(APM->RAM[APM->code[APM->IP + 1]]));
+
+    APM->IP += 2;
+}
+
+void cmdPUSHRM(processor *APM){
+
+    StackPush(APM->stackFrame, &(APM->RAM[APM->Registers[APM->code[APM->IP + 1]]]));
+
+    APM->IP += 2;
+}
+
+void cmdPOPRM(processor *APM){
+
+    StackPop(APM->stackFrame, &(APM->RAM[APM->Registers[APM->code[APM->IP + 1]]]));
 
     APM->IP += 2;
 }
@@ -540,21 +582,37 @@ void cmdDRAW(processor *APM){
 
 void cmdCALL(processor *APM){
 
-    printf("IP = %d, IP + 2 = %d\n", APM->IP, APM->IP + 2);
-
     int newIP = APM->IP + 2;
 
     StackPush(APM->labelRecursion, &newIP);
     
     cmdJMP(APM);
 }
-//3 10 3 20 23 8 2 0 9 24 0 0 0 0 0 0
+
 void cmdRET(processor *APM){
-    printf("IP BEFORE: %d\n", APM->IP);
 
     StackPop(APM->labelRecursion, &(APM->IP));
+}
 
-    printf("IP AFTER: %d\n", APM->IP);
+void cmdFACT(processor *APM){
+    int elem = 0;
+    StackPop(APM->stackFrame, &elem);
+
+    int fact = _cmdFactorial(elem);
+    StackPush(APM->stackFrame, &fact);
+
+    APM->IP++;
+
+}
+
+void cmdFIB(processor *APM){
+    int elem = 0;
+    StackPop(APM->stackFrame, &elem);
+
+    int fib = _cmdFibonacci(elem);
+    StackPush(APM->stackFrame, &fib);
+
+    APM->IP++;
 }
 
 void _cmdDrawConsoleBin(processor *APM){
@@ -577,6 +635,27 @@ void _cmdDrawConsoleChar(processor *APM){
             printf("%c", APM->RAM[VRAM + width * i + j]);
         }
         printf("\n");
+    }
+}
+
+int _cmdFactorial(int num){
+    if(num == 1){
+        return 1;
+    }
+    else{
+        return num * _cmdFactorial(num - 1);
+    }
+}
+
+int _cmdFibonacci(int num){
+    if(num == 1){
+        return 1;
+    }
+    if(num == 2){
+        return 1;
+    }
+    else{
+        return _cmdFibonacci(num - 1) + _cmdFibonacci(num - 2);
     }
 }
 

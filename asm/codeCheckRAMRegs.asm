@@ -1,0 +1,11 @@
+PUSH 42
+POP AX
+
+PUSH 67
+POP [AX]
+
+PUSH [AX]
+
+OUT
+HLT
+
